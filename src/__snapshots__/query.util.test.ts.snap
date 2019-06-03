@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`dbQueryToSQLDelete 1`] = `"DELETE FROM \`TBL1\`"`;
+
+exports[`dbQueryToSQLDelete 2`] = `"DELETE FROM \`TBL1\` WHERE \`a\` IS NOT NULL"`;
+
+exports[`dbQueryToSQLSelect 1`] = `"SELECT * FROM \`TBL1\`"`;
+
+exports[`dbQueryToSQLSelect 2`] = `"SELECT * FROM \`TBL1\` WHERE \`a\` = 'b' AND \`c\` > '2019' ORDER BY \`aaa\` ASC, \`bbb\` DESC LIMIT 15"`;
+
+exports[`dbQueryToSQLSelect 3`] = `"SELECT * FROM \`TBL1\` WHERE \`num\` > 15"`;
+
+exports[`dbQueryToSQLSelect 4`] = `"SELECT * FROM \`TBL1\` WHERE \`a\` IS NULL AND \`a2\` IS NULL AND \`a3\` IS NOT NULL"`;
+
+exports[`dbQueryToSQLSelect 5`] = `"SELECT * FROM \`TBL1\` WHERE \`a\` IN ('a1', 'a2', 'a3')"`;

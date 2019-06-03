@@ -1,12 +1,24 @@
 {
   "name": "@naturalcycles/mysql-lib",
   "scripts": {},
-  "dependencies": {},
+  "dependencies": {
+    "@naturalcycles/db-lib": "^1.2.0",
+    "@naturalcycles/js-lib": "^7.1.0",
+    "mysql": "^2.17.1"
+  },
+  "peerDependencies": {
+    "rxjs": "^6.5.2"
+  },
   "devDependencies": {
     "@naturalcycles/dev-lib": "^7.12.0",
+    "@naturalcycles/nodejs-lib": "^6.5.1",
     "@naturalcycles/semantic-release": "^1.0.0",
+    "@naturalcycles/test-lib": "^1.0.3",
+    "@types/mysql": "^2.15.6",
     "@types/node": "^12.0.4",
-    "jest": "^24.8.0"
+    "dotenv": "^8.0.0",
+    "jest": "^24.8.0",
+    "rxjs": "^6.5.2"
   },
   "files": [
     "dist",
@@ -29,7 +41,13 @@
     "node": ">=10.13"
   },
   "version": "0.0.0",
-  "description": "",
+  "description": "MySQL client implementing CommonDB interface",
+  "keywords": [
+    "mysql",
+    "lib",
+    "db-lib",
+    "commondb"
+  ],
   "author": "Natural Cycles Team",
   "license": "MIT"
 }
