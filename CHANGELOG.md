@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/NaturalCycles/mysql-lib/compare/v1.0.0...v1.1.0) (2019-09-21)
+
+
+### Features
+
+* modernize, implement saveBatch ([5595b6a](https://github.com/NaturalCycles/mysql-lib/commit/5595b6a))
+
 # 1.0.0 (2019-06-03)
 
 
