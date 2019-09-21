@@ -4,57 +4,96 @@ import {
   CommonDBOptions,
   CommonDBSaveOptions,
   DBQuery,
+  RunQueryResult,
+  SavedDBEntity,
 } from '@naturalcycles/db-lib'
-import { logMethod, memo } from '@naturalcycles/js-lib'
-import { Pool, PoolConfig, PoolConnection } from 'mysql'
+import { filterUndefinedValues, logMethod, memo } from '@naturalcycles/js-lib'
+import { Debug, streamToObservable } from '@naturalcycles/nodejs-lib'
+import { Pool, PoolConfig, PoolConnection, TypeCast } from 'mysql'
 import * as mysql from 'mysql'
 import { Observable, Subject } from 'rxjs'
+import { map } from 'rxjs/operators'
 import { Readable, Transform } from 'stream'
 import { promisify } from 'util'
-import { dbQueryToSQLDelete, dbQueryToSQLSelect } from './query.util'
-import { streamToObservable } from './stream.util'
+import { dbQueryToSQLDelete, dbQueryToSQLSelect, insertSQL } from './query.util'
 
 export interface MysqlDBOptions extends CommonDBOptions {}
 export interface MysqlDBSaveOptions extends CommonDBSaveOptions {}
 
-export interface MysqlDBCfg extends PoolConfig {}
+/**
+ * @default false / undefined
+ */
+export interface MysqlDBCfg extends PoolConfig {
+  logSQL?: boolean
+}
+
+const log = Debug('nc:mysql-lib')
+
+const typeCast: TypeCast = (field, next) => {
+  // cast TINY to boolean
+  if (field.type === 'TINY' && field.length === 1) {
+    return field.string() === '1' // 1 = true, 0 = false
+  }
+
+  return next()
+}
 
 export class MysqlDB implements CommonDB {
-  constructor (private cfg: MysqlDBCfg) {}
+  constructor(cfg: MysqlDBCfg) {
+    this.cfg = {
+      typeCast,
+      ...cfg,
+    }
+  }
 
-  init (): void {
+  cfg!: MysqlDBCfg
+
+  init(): void {
     this.pool()
   }
 
+  async resetCache(table?: string): Promise<void> {}
+
   @memo()
   @logMethod({ logResult: false })
-  pool (): Pool {
+  pool(): Pool {
     return mysql.createPool(this.cfg)
   }
 
-  async close (): Promise<void> {
+  async close(): Promise<void> {
     const pool = this.pool()
     await promisify(pool.end.bind(pool))
   }
 
-  async getConnection (): Promise<PoolConnection> {
+  async getConnection(): Promise<PoolConnection> {
     const pool = this.pool()
     return promisify(pool.getConnection.bind(pool))()
   }
 
   // GET
-  async getByIds<DBM = any> (table: string, ids: string[], opts?: MysqlDBOptions): Promise<DBM[]> {
+  async getByIds<DBM extends SavedDBEntity>(
+    table: string,
+    ids: string[],
+    opt?: MysqlDBOptions,
+  ): Promise<DBM[]> {
+    if (!ids.length) return []
     const q = new DBQuery<DBM>(table).filterEq('id', ids)
-    return this.runQuery(q, opts)
+    const { records } = await this.runQuery(q, opt)
+    return records
   }
 
   // QUERY
-  async runQuery<DBM = any> (q: DBQuery<DBM>, opts?: MysqlDBOptions): Promise<DBM[]> {
+  async runQuery<DBM extends SavedDBEntity>(
+    q: DBQuery<DBM>,
+    opt?: MysqlDBOptions,
+  ): Promise<RunQueryResult<DBM>> {
     const sql = dbQueryToSQLSelect(q)
-    return this.runSQL<DBM>(sql)
+    const records = await this.runSQL<DBM[]>(sql)
+    return { records: records.map(r => filterUndefinedValues(r, true)) }
   }
 
-  async runSQL<DBM = any> (sql: string, opts?: MysqlDBOptions): Promise<DBM[]> {
+  async runSQL<RESULT>(sql: string, opt?: MysqlDBOptions): Promise<RESULT> {
+    if (this.cfg.logSQL) log(sql)
     return new Promise(async (resolve, reject) => {
       const con = await this.getConnection()
       con.query(sql, (err, res) => {
@@ -65,19 +104,24 @@ export class MysqlDB implements CommonDB {
     })
   }
 
-  async runQueryCount<DBM = any> (q: DBQuery<DBM>, opts?: CommonDBOptions): Promise<number> {
-    const [row] = await this.runQuery<{ _count: number }>(q.select(['count(*) as _count']))
-    return row._count
+  async runQueryCount<DBM extends SavedDBEntity>(
+    q: DBQuery<DBM>,
+    opt?: CommonDBOptions,
+  ): Promise<number> {
+    const { records } = await this.runQuery(q.select(['count(*) as _count']))
+    return (records[0] as any)._count
   }
 
-  streamQuery<DBM = any> (q: DBQuery<DBM>, opts?: CommonDBOptions): Observable<DBM> {
+  streamQuery<DBM extends SavedDBEntity>(q: DBQuery<DBM>, opt?: CommonDBOptions): Observable<DBM> {
     const subj = new Subject<DBM>()
 
     const sql = dbQueryToSQLSelect(q)
     this.streamSQL(sql)
       .then(stream => {
         // pipe stream into previously created Subject
-        streamToObservable<DBM>(stream).subscribe(subj)
+        streamToObservable<DBM>(stream)
+          .pipe(map(dbm => filterUndefinedValues(dbm, true)))
+          .subscribe(subj)
       })
       .catch(err => {
         subj.error(err)
@@ -86,7 +130,7 @@ export class MysqlDB implements CommonDB {
     return subj
   }
 
-  private async streamSQL (sql: string): Promise<Readable> {
+  private async streamSQL(sql: string): Promise<Readable> {
     return new Promise<Readable>(async (resolve, reject) => {
       const con = await this.getConnection()
       const terminate = (err: Error) => {
@@ -118,35 +162,33 @@ export class MysqlDB implements CommonDB {
   }
 
   // SAVE
-  async saveBatch<DBM extends BaseDBEntity = any> (
+  async saveBatch<DBM extends BaseDBEntity>(
     table: string,
     dbms: DBM[],
-    opts?: MysqlDBSaveOptions,
-  ): Promise<DBM[]> {
-    // todo
-    return undefined as any
+    opt?: MysqlDBSaveOptions,
+  ): Promise<void> {
+    if (!dbms.length) return
+    const sql = insertSQL(table, dbms)
+    await this.runSQL(sql)
   }
 
   // DELETE
-  async deleteBy (
-    table: string,
-    by: string,
-    value: any,
-    limit = 0,
-    opts?: MysqlDBOptions,
-  ): Promise<string[]> {
-    const sql = dbQueryToSQLDelete(new DBQuery(table).filterEq(by, value).limit(limit))
-    await this.runSQL(sql)
-    return []
-  }
-
   /**
    * Limitation: always returns [], regardless of which rows are actually deleted
    */
-  async deleteByIds (table: string, ids: string[], opts?: MysqlDBOptions): Promise<string[]> {
+  async deleteByIds(table: string, ids: string[], opt?: MysqlDBOptions): Promise<number> {
+    if (!ids.length) return 0
     const sql = dbQueryToSQLDelete(new DBQuery(table).filterEq('id', ids))
-    await this.runSQL(sql)
-    return []
-    // todo: affectedRows
+    const res = await this.runSQL<any>(sql)
+    return res.affectedRows
+  }
+
+  async deleteByQuery<DBM extends SavedDBEntity>(
+    q: DBQuery<DBM>,
+    opt?: CommonDBOptions,
+  ): Promise<number> {
+    const sql = dbQueryToSQLDelete(q)
+    const res = await this.runSQL<any>(sql)
+    return res.affectedRows
   }
 }

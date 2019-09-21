@@ -1,5 +1,5 @@
-import { DBQuery } from '@naturalcycles/db-lib'
-import { dbQueryToSQLDelete, dbQueryToSQLSelect } from './query.util'
+import { createTestItemDBM, createTestItemsDBM, DBQuery, TEST_TABLE } from '@naturalcycles/db-lib'
+import { dbQueryToSQLDelete, dbQueryToSQLSelect, dbQueryToSQLUpdate, insertSQL } from './query.util'
 
 test('dbQueryToSQLSelect', () => {
   let sql = dbQueryToSQLSelect(new DBQuery('TBL1'))
@@ -41,5 +41,24 @@ test('dbQueryToSQLDelete', () => {
   expect(sql).toMatchSnapshot()
 
   sql = dbQueryToSQLDelete(new DBQuery('TBL1').filter('a', '>', null))
+  expect(sql).toMatchSnapshot()
+})
+
+test('insertSQL', () => {
+  const items = createTestItemsDBM(3)
+  const sql = insertSQL(TEST_TABLE, items)
+  // console.log(sql)
+  expect(sql).toMatchSnapshot()
+})
+
+test('dbQueryToSQLUpdate', () => {
+  const item = createTestItemDBM()
+
+  let sql = dbQueryToSQLUpdate(new DBQuery(TEST_TABLE), item)
+  // console.log(sql)
+  expect(sql).toMatchSnapshot()
+
+  sql = dbQueryToSQLUpdate(new DBQuery(TEST_TABLE).filter('a', '>', 5), item)
+  // console.log(sql)
   expect(sql).toMatchSnapshot()
 })
