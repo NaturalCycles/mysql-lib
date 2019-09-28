@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/NaturalCycles/mysql-lib/compare/v1.1.0...v1.2.0) (2019-09-28)
+
+
+### Features
+
+* add BIT cast to boolean ([899cce4](https://github.com/NaturalCycles/mysql-lib/commit/899cce4))
+
 # [1.1.0](https://github.com/NaturalCycles/mysql-lib/compare/v1.0.0...v1.1.0) (2019-09-21)
 
 
