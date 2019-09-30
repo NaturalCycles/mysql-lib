@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/NaturalCycles/mysql-lib/compare/v1.2.0...v1.3.0) (2019-09-30)
+
+
+### Features
+
+* cfg.debugConnections ([70218ba](https://github.com/NaturalCycles/mysql-lib/commit/70218ba))
+
 # [1.2.0](https://github.com/NaturalCycles/mysql-lib/compare/v1.1.0...v1.2.0) (2019-09-28)
 
 
