@@ -17,6 +17,7 @@ const db = new MysqlDB({
   password: MYSQL_PW,
   database: MYSQL_DB,
   logSQL: true,
+  debugConnections: true,
   // debug: true,
   // multipleStatements: true,
 })

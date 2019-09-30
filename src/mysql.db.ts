@@ -24,7 +24,15 @@ export interface MysqlDBSaveOptions extends CommonDBSaveOptions {}
  * @default false / undefined
  */
 export interface MysqlDBCfg extends PoolConfig {
+  /**
+   * If true - will log all produced SQL queries.
+   */
   logSQL?: boolean
+
+  /**
+   * If true - will emit logs of connection events.
+   */
+  debugConnections?: boolean
 }
 
 const log = Debug('nc:mysql-lib')
@@ -57,7 +65,30 @@ export class MysqlDB implements CommonDB {
   @memo()
   @logMethod({ logResult: false })
   pool(): Pool {
-    return mysql.createPool(this.cfg)
+    const pool = mysql.createPool(this.cfg)
+    if (this.cfg.debugConnections) {
+      pool.on('acquire', con => {
+        log(`acquire ${con.threadId}`)
+      })
+
+      pool.on('connection', con => {
+        log(`connection ${con.threadId}`)
+      })
+
+      pool.on('enqueue', () => {
+        log(`enqueue`)
+      })
+
+      pool.on('release', con => {
+        log(`release ${con.threadId}`)
+      })
+    }
+
+    pool.on('error', err => {
+      log.error(`error`, err)
+    })
+
+    return pool
   }
 
   async close(): Promise<void> {
@@ -116,6 +147,7 @@ export class MysqlDB implements CommonDB {
     const subj = new Subject<DBM>()
 
     const sql = dbQueryToSQLSelect(q)
+    if (this.cfg.logSQL) log(sql)
     this.streamSQL(sql)
       .then(stream => {
         // pipe stream into previously created Subject
