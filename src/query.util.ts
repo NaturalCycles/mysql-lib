@@ -1,5 +1,7 @@
 import { DBQuery } from '@naturalcycles/db-lib'
-import * as mysql from 'mysql'
+// import * as mysql from 'mysql'
+import * as MysqlStatic from 'mysql'
+const mysql = require('mysql2') as typeof MysqlStatic
 
 export function dbQueryToSQLSelect(q: DBQuery): string {
   const tokens = selectTokens(q)

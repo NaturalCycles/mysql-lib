@@ -10,7 +10,8 @@ import {
 import { filterUndefinedValues, logMethod, memo } from '@naturalcycles/js-lib'
 import { Debug, streamToObservable } from '@naturalcycles/nodejs-lib'
 import { Connection, Pool, PoolConfig, PoolConnection, TypeCast } from 'mysql'
-import * as mysql from 'mysql'
+import * as MysqlStatic from 'mysql'
+const mysql = require('mysql2') as typeof MysqlStatic
 import { Observable, Subject } from 'rxjs'
 import { map } from 'rxjs/operators'
 import { Readable, Transform } from 'stream'
