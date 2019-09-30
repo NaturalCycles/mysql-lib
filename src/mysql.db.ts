@@ -104,6 +104,9 @@ export class MysqlDB implements CommonDB {
     await promisify(pool.end.bind(pool))
   }
 
+  /**
+   * Be careful to always call `con.release()` when you get connection with this method.
+   */
   async getConnection(): Promise<PoolConnection> {
     const pool = this.pool()
     return promisify(pool.getConnection.bind(pool))()
@@ -160,11 +163,11 @@ export class MysqlDB implements CommonDB {
     if (this.cfg.logSQL) log(sql)
 
     return new Promise(async (resolve, reject) => {
-      const con = opt.con || (await this.getConnection())
-      con.query(sql, (err, res) => {
-        if ((con as PoolConnection).release) {
-          ;(con as PoolConnection).release()
-        }
+      // const con = opt.con || (await this.getConnection())
+      ;(opt.con ? opt.con : this.pool()).query(sql, (err, res) => {
+        // if ((con as PoolConnection).release) {
+        //   ;(con as PoolConnection).release()
+        // }
         if (err) return reject(err)
         resolve(res)
       })
@@ -205,14 +208,14 @@ export class MysqlDB implements CommonDB {
 
   async streamSQL(sql: string, opt: MysqlDBOptions = {}): Promise<Readable> {
     // const con = opt.con || await this.createSingleConnection()
-    const con = opt.con || (await this.getConnection())
+    // const con = opt.con || (await this.getConnection())
     // const con = await this.getConnection()
     // const terminate = (err: Error) => {
     //   con.end() // void
     //   return reject(err)
     // }
 
-    const stream = con
+    const stream = (opt.con ? opt.con : this.pool())
       .query(sql)
       // .on('error', terminate)
       // .on('finish', () => {
