@@ -9,7 +9,7 @@ import {
 } from '@naturalcycles/db-lib'
 import { filterUndefinedValues, logMethod, memo } from '@naturalcycles/js-lib'
 import { Debug, streamToObservable } from '@naturalcycles/nodejs-lib'
-import { Pool, PoolConfig, PoolConnection, TypeCast } from 'mysql'
+import { Connection, Pool, PoolConfig, PoolConnection, TypeCast } from 'mysql'
 import * as mysql from 'mysql'
 import { Observable, Subject } from 'rxjs'
 import { map } from 'rxjs/operators'
@@ -66,13 +66,14 @@ export class MysqlDB implements CommonDB {
   @logMethod({ logResult: false })
   pool(): Pool {
     const pool = mysql.createPool(this.cfg)
+
     if (this.cfg.debugConnections) {
       pool.on('acquire', con => {
-        log(`acquire ${con.threadId}`)
+        log(`acquire(${con.threadId})`)
       })
 
       pool.on('connection', con => {
-        log(`connection ${con.threadId}`)
+        log(`connection(${con.threadId})`)
       })
 
       pool.on('enqueue', () => {
@@ -80,7 +81,7 @@ export class MysqlDB implements CommonDB {
       })
 
       pool.on('release', con => {
-        log(`release ${con.threadId}`)
+        log(`release(${con.threadId})`)
       })
     }
 
@@ -99,6 +100,30 @@ export class MysqlDB implements CommonDB {
   async getConnection(): Promise<PoolConnection> {
     const pool = this.pool()
     return promisify(pool.getConnection.bind(pool))()
+  }
+
+  /**
+   * Manually create a single (not pool) connection.
+   * Be careful to manage this connection yourself (open, release, etc).
+   */
+  async createSingleConnection(): Promise<Connection> {
+    const con = mysql.createConnection(this.cfg)
+    const { threadId } = con
+
+    if (this.cfg.debugConnections) {
+      log(`createSingleConnection(${threadId})`)
+
+      con.on('connect', () => log(`createSingleConnection(${threadId}).connect`))
+      con.on('drain', () => log(`createSingleConnection(${threadId}).drain`))
+      con.on('enqueue', () => log(`createSingleConnection(${threadId}).enqueue`))
+      con.on('end', () => log(`createSingleConnection(${threadId}).end`))
+    }
+
+    con.on('error', err => {
+      log.error(`createSingleConnection(${threadId}).error`, err)
+    })
+
+    return con
   }
 
   // GET
@@ -147,7 +172,7 @@ export class MysqlDB implements CommonDB {
     const subj = new Subject<DBM>()
 
     const sql = dbQueryToSQLSelect(q)
-    if (this.cfg.logSQL) log(sql)
+    if (this.cfg.logSQL) log(`stream: ${sql}`)
     this.streamSQL(sql)
       .then(stream => {
         // pipe stream into previously created Subject
@@ -164,16 +189,17 @@ export class MysqlDB implements CommonDB {
 
   private async streamSQL(sql: string): Promise<Readable> {
     return new Promise<Readable>(async (resolve, reject) => {
-      const con = await this.getConnection()
+      const con = await this.createSingleConnection()
+      // const con = await this.getConnection()
       const terminate = (err: Error) => {
-        con.release()
+        con.end() // void
         return reject(err)
       }
 
       const s = con
         .query(sql)
         .on('error', terminate)
-        .on('finish', () => con.release())
+        .on('finish', () => con.end())
         .on('fields', _fields => {
           con.pause()
           const stream = s
