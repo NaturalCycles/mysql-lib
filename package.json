@@ -5,13 +5,13 @@
     "@naturalcycles/db-lib": "^1.2.0",
     "@naturalcycles/js-lib": "^8.7.1",
     "@naturalcycles/nodejs-lib": "^6.5.1",
+    "@types/mysql": "^2.15.6",
     "mysql": "^2.17.1",
     "rxjs": "^6.5.2"
   },
   "devDependencies": {
     "@naturalcycles/dev-lib": "^8.1.0",
     "@naturalcycles/test-lib": "^1.0.3",
-    "@types/mysql": "^2.15.6",
     "@types/node": "^12.0.4",
     "dotenv": "^8.0.0",
     "jest": "^24.8.0"
