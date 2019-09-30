@@ -10,8 +10,8 @@ export function dbQueryToSQLSelect(q: DBQuery): string {
   // order
   tokens.push(...orderTokens(q))
 
-  // limit
-  tokens.push(...limitTokens(q))
+  // offset/limit
+  tokens.push(...offsetLimitTokens(q))
 
   return tokens.join(' ')
 }
@@ -22,8 +22,8 @@ export function dbQueryToSQLDelete(q: DBQuery): string {
   // filters
   tokens.push(...whereTokens(q))
 
-  // limit
-  tokens.push(...limitTokens(q))
+  // offset/limit
+  tokens.push(...offsetLimitTokens(q))
 
   return tokens.join(' ')
 }
@@ -104,9 +104,19 @@ function selectTokens(q: DBQuery): string[] {
   return [`SELECT`, fields.join(', '), `FROM`, mysql.escapeId(q.table)]
 }
 
-function limitTokens(q: DBQuery): string[] {
-  if (!q._limitValue) return []
-  return [`LIMIT`, String(q._limitValue)]
+function offsetLimitTokens(q: DBQuery): string[] {
+  const tokens: string[] = []
+
+  if (q._limitValue) {
+    tokens.push(`LIMIT`, String(q._limitValue))
+
+    // In SQL OFFSET is only allowed if LIMIT is set
+    if (q._offsetValue) {
+      tokens.push(`OFFSET`, String(q._offsetValue))
+    }
+  }
+
+  return tokens
 }
 
 function orderTokens(q: DBQuery): string[] {
