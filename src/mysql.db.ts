@@ -17,7 +17,12 @@ import { Readable, Transform } from 'stream'
 import { promisify } from 'util'
 import { dbQueryToSQLDelete, dbQueryToSQLSelect, insertSQL } from './query.util'
 
-export interface MysqlDBOptions extends CommonDBOptions {}
+export interface MysqlDBOptions extends CommonDBOptions {
+  /**
+   * If passed - will use that connection.
+   */
+  con?: Connection
+}
 export interface MysqlDBSaveOptions extends CommonDBSaveOptions {}
 
 /**
@@ -56,8 +61,10 @@ export class MysqlDB implements CommonDB {
 
   cfg!: MysqlDBCfg
 
-  init(): void {
+  async init(): Promise<void> {
     this.pool()
+    const con = await this.getConnection()
+    con.release()
   }
 
   async resetCache(table?: string): Promise<void> {}
@@ -108,6 +115,7 @@ export class MysqlDB implements CommonDB {
    */
   async createSingleConnection(): Promise<Connection> {
     const con = mysql.createConnection(this.cfg)
+    await promisify(con.connect.bind(con))()
     const { threadId } = con
 
     if (this.cfg.debugConnections) {
@@ -130,7 +138,7 @@ export class MysqlDB implements CommonDB {
   async getByIds<DBM extends SavedDBEntity>(
     table: string,
     ids: string[],
-    opt?: MysqlDBOptions,
+    opt: MysqlDBOptions = {},
   ): Promise<DBM[]> {
     if (!ids.length) return []
     const q = new DBQuery<DBM>(table).filterEq('id', ids)
@@ -141,19 +149,22 @@ export class MysqlDB implements CommonDB {
   // QUERY
   async runQuery<DBM extends SavedDBEntity>(
     q: DBQuery<DBM>,
-    opt?: MysqlDBOptions,
+    opt: MysqlDBOptions = {},
   ): Promise<RunQueryResult<DBM>> {
     const sql = dbQueryToSQLSelect(q)
     const records = await this.runSQL<DBM[]>(sql)
     return { records: records.map(r => filterUndefinedValues(r, true)) }
   }
 
-  async runSQL<RESULT>(sql: string, opt?: MysqlDBOptions): Promise<RESULT> {
+  async runSQL<RESULT>(sql: string, opt: MysqlDBOptions = {}): Promise<RESULT> {
     if (this.cfg.logSQL) log(sql)
+
     return new Promise(async (resolve, reject) => {
-      const con = await this.getConnection()
+      const con = opt.con || (await this.getConnection())
       con.query(sql, (err, res) => {
-        con.release()
+        if ((con as PoolConnection).release) {
+          ;(con as PoolConnection).release()
+        }
         if (err) return reject(err)
         resolve(res)
       })
@@ -168,12 +179,17 @@ export class MysqlDB implements CommonDB {
     return (records[0] as any)._count
   }
 
-  streamQuery<DBM extends SavedDBEntity>(q: DBQuery<DBM>, opt?: CommonDBOptions): Observable<DBM> {
+  streamQuery<DBM extends SavedDBEntity>(
+    q: DBQuery<DBM>,
+    opt: MysqlDBOptions = {},
+  ): Observable<DBM> {
     const subj = new Subject<DBM>()
 
     const sql = dbQueryToSQLSelect(q)
+
     if (this.cfg.logSQL) log(`stream: ${sql}`)
-    this.streamSQL(sql)
+
+    this.streamSQL(sql, opt)
       .then(stream => {
         // pipe stream into previously created Subject
         streamToObservable<DBM>(stream)
@@ -187,9 +203,39 @@ export class MysqlDB implements CommonDB {
     return subj
   }
 
-  private async streamSQL(sql: string): Promise<Readable> {
+  async streamSQL(sql: string, opt: MysqlDBOptions = {}): Promise<Readable> {
+    // const con = opt.con || await this.createSingleConnection()
+    const con = opt.con || (await this.getConnection())
+    // const con = await this.getConnection()
+    // const terminate = (err: Error) => {
+    //   con.end() // void
+    //   return reject(err)
+    // }
+
+    const stream = con
+      .query(sql)
+      // .on('error', terminate)
+      // .on('finish', () => {
+      //   if ((con as PoolConnection).release) {
+      //     (con as PoolConnection).release()
+      //   }
+      // })
+      .stream()
+    // .pipe(
+    //   new Transform({
+    //     objectMode: true,
+    //     transform: (rows: any, encoding, callback) => {
+    //       callback(undefined, rows)
+    //     },
+    //   }),
+    // )
+
+    return stream
+  }
+
+  async _streamSQL(sql: string, opt: MysqlDBOptions = {}): Promise<Readable> {
     return new Promise<Readable>(async (resolve, reject) => {
-      const con = await this.createSingleConnection()
+      const con = opt.con! // || await this.createSingleConnection()
       // const con = await this.getConnection()
       const terminate = (err: Error) => {
         con.end() // void
@@ -199,7 +245,11 @@ export class MysqlDB implements CommonDB {
       const s = con
         .query(sql)
         .on('error', terminate)
-        .on('finish', () => con.end())
+        .on('finish', () => {
+          if ((con as PoolConnection).release) {
+            ;(con as PoolConnection).release()
+          }
+        })
         .on('fields', _fields => {
           con.pause()
           const stream = s
