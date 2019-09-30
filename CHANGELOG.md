@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/NaturalCycles/mysql-lib/compare/v1.6.0...v1.7.0) (2019-09-30)
+
+
+### Features
+
+* tiny change to use pool.query inst of getConnection() ([6ffe1b4](https://github.com/NaturalCycles/mysql-lib/commit/6ffe1b4))
+
 # [1.6.0](https://github.com/NaturalCycles/mysql-lib/compare/v1.5.0...v1.6.0) (2019-09-30)
 
 
