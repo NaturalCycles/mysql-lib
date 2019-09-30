@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/NaturalCycles/mysql-lib/compare/v1.5.0...v1.6.0) (2019-09-30)
+
+
+### Features
+
+* offset ([78710a1](https://github.com/NaturalCycles/mysql-lib/commit/78710a1))
+
 # [1.5.0](https://github.com/NaturalCycles/mysql-lib/compare/v1.4.0...v1.5.0) (2019-09-30)
 
 
