@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/NaturalCycles/mysql-lib/compare/v1.4.0...v1.5.0) (2019-09-30)
+
+
+### Features
+
+* testing simpler streamSQL impl ([0887aa3](https://github.com/NaturalCycles/mysql-lib/commit/0887aa3))
+
 # [1.4.0](https://github.com/NaturalCycles/mysql-lib/compare/v1.3.0...v1.4.0) (2019-09-30)
 
 
