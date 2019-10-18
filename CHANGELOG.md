@@ -1,3 +1,10 @@
+## [1.7.1](https://github.com/NaturalCycles/mysql-lib/compare/v1.7.0...v1.7.1) (2019-10-18)
+
+
+### Bug Fixes
+
+* pin @types/hapi__joi ([3e3cf5a](https://github.com/NaturalCycles/mysql-lib/commit/3e3cf5a))
+
 # [1.7.0](https://github.com/NaturalCycles/mysql-lib/compare/v1.6.0...v1.7.0) (2019-09-30)
 
 
