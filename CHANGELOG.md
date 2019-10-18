@@ -1,3 +1,15 @@
+# [2.0.0](https://github.com/NaturalCycles/mysql-lib/compare/v1.7.1...v2.0.0) (2019-10-18)
+
+
+### Features
+
+* implement CommonDB 2.0 ([9de0e9f](https://github.com/NaturalCycles/mysql-lib/commit/9de0e9f))
+
+
+### BREAKING CHANGES
+
+* ^^^
+
 ## [1.7.1](https://github.com/NaturalCycles/mysql-lib/compare/v1.7.0...v1.7.1) (2019-10-18)
 
 
