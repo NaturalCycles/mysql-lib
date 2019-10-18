@@ -8,12 +8,10 @@ import {
   SavedDBEntity,
 } from '@naturalcycles/db-lib'
 import { filterUndefinedValues, logMethod, memo } from '@naturalcycles/js-lib'
-import { Debug, streamToObservable } from '@naturalcycles/nodejs-lib'
+import { Debug } from '@naturalcycles/nodejs-lib'
 import { Connection, Pool, PoolConfig, PoolConnection, TypeCast } from 'mysql'
 import * as mysql from 'mysql'
-import { Observable, Subject } from 'rxjs'
-import { map } from 'rxjs/operators'
-import { Readable, Transform } from 'stream'
+import { Transform } from 'stream'
 import { promisify } from 'util'
 import { dbQueryToSQLDelete, dbQueryToSQLSelect, insertSQL } from './query.util'
 
@@ -185,91 +183,23 @@ export class MysqlDB implements CommonDB {
   streamQuery<DBM extends SavedDBEntity>(
     q: DBQuery<DBM>,
     opt: MysqlDBOptions = {},
-  ): Observable<DBM> {
-    const subj = new Subject<DBM>()
-
+  ): NodeJS.ReadableStream {
     const sql = dbQueryToSQLSelect(q)
 
     if (this.cfg.logSQL) log(`stream: ${sql}`)
 
-    this.streamSQL(sql, opt)
-      .then(stream => {
-        // pipe stream into previously created Subject
-        streamToObservable<DBM>(stream)
-          .pipe(map(dbm => filterUndefinedValues(dbm, true)))
-          .subscribe(subj)
-      })
-      .catch(err => {
-        subj.error(err)
-      })
-
-    return subj
-  }
-
-  async streamSQL(sql: string, opt: MysqlDBOptions = {}): Promise<Readable> {
-    // const con = opt.con || await this.createSingleConnection()
-    // const con = opt.con || (await this.getConnection())
-    // const con = await this.getConnection()
-    // const terminate = (err: Error) => {
-    //   con.end() // void
-    //   return reject(err)
-    // }
-
-    const stream = (opt.con ? opt.con : this.pool())
+    // return this.streamSQL(sql, opt)
+    return this.pool()
       .query(sql)
-      // .on('error', terminate)
-      // .on('finish', () => {
-      //   if ((con as PoolConnection).release) {
-      //     (con as PoolConnection).release()
-      //   }
-      // })
       .stream()
-    // .pipe(
-    //   new Transform({
-    //     objectMode: true,
-    //     transform: (rows: any, encoding, callback) => {
-    //       callback(undefined, rows)
-    //     },
-    //   }),
-    // )
-
-    return stream
-  }
-
-  async _streamSQL(sql: string, opt: MysqlDBOptions = {}): Promise<Readable> {
-    return new Promise<Readable>(async (resolve, reject) => {
-      const con = opt.con! // || await this.createSingleConnection()
-      // const con = await this.getConnection()
-      const terminate = (err: Error) => {
-        con.end() // void
-        return reject(err)
-      }
-
-      const s = con
-        .query(sql)
-        .on('error', terminate)
-        .on('finish', () => {
-          if ((con as PoolConnection).release) {
-            ;(con as PoolConnection).release()
-          }
-        })
-        .on('fields', _fields => {
-          con.pause()
-          const stream = s
-            .stream()
-            .pipe(
-              new Transform({
-                objectMode: true,
-                transform: (rows: any, encoding, callback) => {
-                  callback(undefined, rows)
-                },
-              }),
-            )
-            .on('pause', () => con.pause())
-            .on('resume', () => con.resume())
-          resolve(stream)
-        })
-    })
+      .pipe(
+        new Transform({
+          objectMode: true,
+          transform(dbm, _encoding, cb) {
+            cb(null, filterUndefinedValues(dbm, true))
+          },
+        }),
+      )
   }
 
   // SAVE

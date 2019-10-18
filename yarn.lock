@@ -464,16 +464,15 @@
     mkdirp "^0.5.1"
     rimraf "^2.5.2"
 
-"@naturalcycles/db-lib@^1.2.0":
-  version "1.24.1"
-  resolved "https://registry.yarnpkg.com/@naturalcycles/db-lib/-/db-lib-1.24.1.tgz#a295ecc8c0a981f55fcef67e4b8bce53b69b6f28"
-  integrity sha512-7k0dARXE2/n8MypeTBQOtookFD8cQkjI5UO71MhfBaJn2w4G8dRm5HbgRXku80DTzj+8CmkXarRPqOGxWY2c/A==
+"@naturalcycles/db-lib@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@naturalcycles/db-lib/-/db-lib-2.0.0.tgz#ec957660ab99bd63e1c6b8c28c58c9acb6f35d09"
+  integrity sha512-AjHxHaIrJ/6+rJ+587AxNn3RoR/DrH9yRORZdxqR9n7qGOYFoIsJddE1kvgZK+s+y/BhhacuTXfOtwZpNXA7Uw==
   dependencies:
     "@naturalcycles/js-lib" "^8.2.1"
     "@naturalcycles/nodejs-lib" "^6.5.0"
     "@naturalcycles/time-lib" "^1.4.3"
     fs-extra "^8.1.0"
-    rxjs "^6.5.2"
     type-fest "^0.8.0"
 
 "@naturalcycles/dev-lib@^8.1.0":

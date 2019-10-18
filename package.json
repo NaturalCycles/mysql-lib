@@ -1,13 +1,15 @@
 {
   "name": "@naturalcycles/mysql-lib",
   "scripts": {},
+  "peerDependencies": {
+    "@naturalcycles/db-lib": ">=2.0.0"
+  },
   "dependencies": {
-    "@naturalcycles/db-lib": "^1.2.0",
+    "@naturalcycles/db-lib": "^2.0.0",
     "@naturalcycles/js-lib": "^8.7.1",
     "@naturalcycles/nodejs-lib": "^6.5.1",
     "@types/mysql": "^2.15.6",
-    "mysql": "^2.17.1",
-    "rxjs": "^6.5.2"
+    "mysql": "^2.17.1"
   },
   "devDependencies": {
     "@naturalcycles/dev-lib": "^8.1.0",
