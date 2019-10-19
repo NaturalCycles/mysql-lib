@@ -465,9 +465,9 @@
     rimraf "^2.5.2"
 
 "@naturalcycles/db-lib@^2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@naturalcycles/db-lib/-/db-lib-2.0.0.tgz#ec957660ab99bd63e1c6b8c28c58c9acb6f35d09"
-  integrity sha512-AjHxHaIrJ/6+rJ+587AxNn3RoR/DrH9yRORZdxqR9n7qGOYFoIsJddE1kvgZK+s+y/BhhacuTXfOtwZpNXA7Uw==
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/@naturalcycles/db-lib/-/db-lib-2.0.2.tgz#58a0118ef962af8beab9e083ea8905e224d4c196"
+  integrity sha512-y3iEmYkWUA1hIyWkG1Gy7xSKgsU+9wakBs7KxC1DdETWbkNaOiS86Ugtp01h1oQ5rYS84x6dcXvAGq55liRseg==
   dependencies:
     "@naturalcycles/js-lib" "^8.2.1"
     "@naturalcycles/nodejs-lib" "^6.5.0"
@@ -531,9 +531,9 @@
     type-fest "^0.8.0"
 
 "@naturalcycles/nodejs-lib@^6.20.0", "@naturalcycles/nodejs-lib@^6.5.0", "@naturalcycles/nodejs-lib@^6.5.1":
-  version "6.23.1"
-  resolved "https://registry.yarnpkg.com/@naturalcycles/nodejs-lib/-/nodejs-lib-6.23.1.tgz#745dc924b6cc58ec7ab8b045d8ea04507600292a"
-  integrity sha512-KxzkXufvz/I1TmpU2RRMBi7IzBYn/aZA6JOpdScqYujG9WiyvS9uw6csfmJRvaw25e1OUj7tiFX6CJdtXMu6xQ==
+  version "6.24.2"
+  resolved "https://registry.yarnpkg.com/@naturalcycles/nodejs-lib/-/nodejs-lib-6.24.2.tgz#0c5aa7399baad92a8f6ac6d3186d004ec7793548"
+  integrity sha512-9EeFhuIld+s/6tC9lrgZnHnME25lAd1k4b5keFwDLllltxeAHKmLWzoARS6eyZ0DEGo8ciihHgqm8yrgyKssCw==
   dependencies:
     "@hapi/joi" "^15.0.2"
     "@naturalcycles/js-lib" "^8.0.0"
@@ -1366,12 +1366,7 @@ command-exists@^1.2.8:
   resolved "https://registry.yarnpkg.com/command-exists/-/command-exists-1.2.8.tgz#715acefdd1223b9c9b37110a149c6392c2852291"
   integrity sha512-PM54PkseWbiiD/mMsbvW351/u+dafwTJ0ye2qB60G1aGQP9j3xK2gmMDc+R34L3nDtx4qMCitXT75mkbkGJDLw==
 
-commander@2.20.0:
-  version "2.20.0"
-  resolved "https://registry.yarnpkg.com/commander/-/commander-2.20.0.tgz#d58bb2b5c1ee8f87b0d340027e9e94e222c5a422"
-  integrity sha512-7j2y+40w61zy6YC2iRNpUe/NwhNyoXrYpHMrSunaMG64nRnaf96zO/KMQR4OyN/UnE5KLyEBnKHd4aG3rskjpQ==
-
-commander@^2.12.1, commander@^2.14.1, commander@^2.9.0:
+commander@^2.12.1, commander@^2.14.1, commander@^2.9.0, commander@~2.20.3:
   version "2.20.3"
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.20.3.tgz#fd485e84c03eb4881c20722ba48035e8531aeb33"
   integrity sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==
@@ -1746,9 +1741,9 @@ error-ex@^1.3.1:
     is-arrayish "^0.2.1"
 
 es-abstract@^1.5.1:
-  version "1.15.0"
-  resolved "https://registry.yarnpkg.com/es-abstract/-/es-abstract-1.15.0.tgz#8884928ec7e40a79e3c9bc812d37d10c8b24cc57"
-  integrity sha512-bhkEqWJ2t2lMeaJDuk7okMkJWI/yqgH/EoGwpcvv0XW9RWQsRspI4wt6xuyuvMvvQE3gg/D9HXppgk21w78GyQ==
+  version "1.16.0"
+  resolved "https://registry.yarnpkg.com/es-abstract/-/es-abstract-1.16.0.tgz#d3a26dc9c3283ac9750dca569586e976d9dcc06d"
+  integrity sha512-xdQnfykZ9JMEiasTAJZJdMWCQ1Vm00NBw79/AWi7ELfZuuPCSOMDZbT9mkOfSctVtfhb+sAAzrm+j//GjjLHLg==
   dependencies:
     es-to-primitive "^1.2.0"
     function-bind "^1.1.1"
@@ -5322,11 +5317,11 @@ typescript@^3.4.5:
   integrity sha512-unoCll1+l+YK4i4F8f22TaNVPRHcD9PA3yCuZ8g5e0qGqlVlJ/8FSateOLLSagn+Yg5+ZwuPkL8LFUc0Jcvksg==
 
 uglify-js@^3.1.4:
-  version "3.6.2"
-  resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-3.6.2.tgz#fd8048c86d990ddd29fe99d3300e0cb329103f4d"
-  integrity sha512-+gh/xFte41GPrgSMJ/oJVq15zYmqr74pY9VoM69UzMzq9NFk4YDylclb1/bhEzZSaUQjbW5RvniHeq1cdtRYjw==
+  version "3.6.3"
+  resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-3.6.3.tgz#1351533bbe22cc698f012589ed6bd4cbd971bff8"
+  integrity sha512-KfQUgOqTkLp2aZxrMbCuKCDGW9slFYu2A23A36Gs7sGzTLcRBDORdOi5E21KWHFIfkY8kzgi/Pr1cXCh0yIp5g==
   dependencies:
-    commander "2.20.0"
+    commander "~2.20.3"
     source-map "~0.6.1"
 
 "underscore@>= 1.1.6 < 1.6":
