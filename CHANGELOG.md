@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/NaturalCycles/mysql-lib/compare/v2.0.0...v2.0.1) (2019-10-19)
+
+
+### Bug Fixes
+
+* use Readable ([a0d09c1](https://github.com/NaturalCycles/mysql-lib/commit/a0d09c1))
+
 # [2.0.0](https://github.com/NaturalCycles/mysql-lib/compare/v1.7.1...v2.0.0) (2019-10-18)
 
 
