@@ -1,3 +1,10 @@
+## [2.0.2](https://github.com/NaturalCycles/mysql-lib/compare/v2.0.1...v2.0.2) (2019-10-20)
+
+
+### Bug Fixes
+
+* adopt to db-lib ([6da7d78](https://github.com/NaturalCycles/mysql-lib/commit/6da7d78))
+
 ## [2.0.1](https://github.com/NaturalCycles/mysql-lib/compare/v2.0.0...v2.0.1) (2019-10-19)
 
 
