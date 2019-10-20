@@ -8,10 +8,10 @@ import {
   SavedDBEntity,
 } from '@naturalcycles/db-lib'
 import { filterUndefinedValues, logMethod, memo } from '@naturalcycles/js-lib'
-import { Debug } from '@naturalcycles/nodejs-lib'
+import { Debug, ReadableTyped } from '@naturalcycles/nodejs-lib'
 import { Connection, Pool, PoolConfig, PoolConnection, TypeCast } from 'mysql'
 import * as mysql from 'mysql'
-import { Readable, Transform } from 'stream'
+import { Transform } from 'stream'
 import { promisify } from 'util'
 import { dbQueryToSQLDelete, dbQueryToSQLSelect, insertSQL } from './query.util'
 
@@ -180,7 +180,10 @@ export class MysqlDB implements CommonDB {
     return (records[0] as any)._count
   }
 
-  streamQuery<DBM extends SavedDBEntity>(q: DBQuery<DBM>, opt: MysqlDBOptions = {}): Readable {
+  streamQuery<DBM extends SavedDBEntity, OUT = DBM>(
+    q: DBQuery<DBM>,
+    opt: MysqlDBOptions = {},
+  ): ReadableTyped<OUT> {
     const sql = dbQueryToSQLSelect(q)
 
     if (this.cfg.logSQL) log(`stream: ${sql}`)

@@ -465,14 +465,15 @@
     rimraf "^2.5.2"
 
 "@naturalcycles/db-lib@^2.0.0":
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/@naturalcycles/db-lib/-/db-lib-2.0.2.tgz#58a0118ef962af8beab9e083ea8905e224d4c196"
-  integrity sha512-y3iEmYkWUA1hIyWkG1Gy7xSKgsU+9wakBs7KxC1DdETWbkNaOiS86Ugtp01h1oQ5rYS84x6dcXvAGq55liRseg==
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@naturalcycles/db-lib/-/db-lib-2.1.0.tgz#3e7f5408ec3ab484a4932c514c16811925fef0a4"
+  integrity sha512-CF34t8h3X9qaxwGEMrFk2b3zTxvzlkMPm6Hm15pZeeLgPrWVIbgfaaHzoVXNQl7EO60U8JMFlGl+WeS5NyU/Jw==
   dependencies:
     "@naturalcycles/js-lib" "^8.2.1"
     "@naturalcycles/nodejs-lib" "^6.5.0"
     "@naturalcycles/time-lib" "^1.4.3"
     fs-extra "^8.1.0"
+    rxjs "^6.5.3"
     type-fest "^0.8.0"
 
 "@naturalcycles/dev-lib@^8.1.0":
@@ -524,16 +525,16 @@
     yargs "^14.0.0"
 
 "@naturalcycles/js-lib@^8.0.0", "@naturalcycles/js-lib@^8.2.1", "@naturalcycles/js-lib@^8.4.0", "@naturalcycles/js-lib@^8.7.1":
-  version "8.7.1"
-  resolved "https://registry.yarnpkg.com/@naturalcycles/js-lib/-/js-lib-8.7.1.tgz#9283cb2506a03f414f3b1bca3f9e6e1b4d1e8a9b"
-  integrity sha512-caOFzZJnlYxnNsMI1IDXx+pMpogYo8IWRkFWZXrc3hNDyLt7UFZyhWhBajNrg8KuRXh4BYFnY4M9V6KxKBkzKg==
+  version "8.8.0"
+  resolved "https://registry.yarnpkg.com/@naturalcycles/js-lib/-/js-lib-8.8.0.tgz#ce8a3589be764d1bf83f9dc485729263c0ac0184"
+  integrity sha512-cwV1//caAuG+cgWL6/oc6Iv6g7IwPUbDChwmpNt9eQX3aAUyjVEjXzGgLBqP8sxbL4eS4HfL97cZCJYsepu0eQ==
   dependencies:
     type-fest "^0.8.0"
 
 "@naturalcycles/nodejs-lib@^6.20.0", "@naturalcycles/nodejs-lib@^6.5.0", "@naturalcycles/nodejs-lib@^6.5.1":
-  version "6.24.2"
-  resolved "https://registry.yarnpkg.com/@naturalcycles/nodejs-lib/-/nodejs-lib-6.24.2.tgz#0c5aa7399baad92a8f6ac6d3186d004ec7793548"
-  integrity sha512-9EeFhuIld+s/6tC9lrgZnHnME25lAd1k4b5keFwDLllltxeAHKmLWzoARS6eyZ0DEGo8ciihHgqm8yrgyKssCw==
+  version "6.29.0"
+  resolved "https://registry.yarnpkg.com/@naturalcycles/nodejs-lib/-/nodejs-lib-6.29.0.tgz#63195f8cf01cb2415e02f2f5ad00ef74605a0f50"
+  integrity sha512-6V60vIY0ChaYLTG8qpMYbci54m6mEdv9cp8MYuZwsbuUlHJUqbSH+2s1jjcOyoyGwnzPznkCMMkyGQQYGz4i3A==
   dependencies:
     "@hapi/joi" "^15.0.2"
     "@naturalcycles/js-lib" "^8.0.0"
@@ -4633,7 +4634,7 @@ run-parallel@^1.1.9:
   resolved "https://registry.yarnpkg.com/run-parallel/-/run-parallel-1.1.9.tgz#c9dd3a7cf9f4b2c4b6244e173a6ed866e61dd679"
   integrity sha512-DEqnSRTDw/Tc3FXf49zedI638Z9onwUotBMiUFKmrO2sdFKIbXamXGQ3Axd4qgphxKB4kw/qP1w5kTxnfU1B9Q==
 
-rxjs@^6.3.3, rxjs@^6.5.2:
+rxjs@^6.3.3, rxjs@^6.5.2, rxjs@^6.5.3:
   version "6.5.3"
   resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-6.5.3.tgz#510e26317f4db91a7eb1de77d9dd9ba0a4899a3a"
   integrity sha512-wuYsAYYFdWTAnAaPoKGNhfpWwKZbJW+HgAJ+mImp+Epl7BG8oNWBCTyRM8gba9k4lk8BgWdoYm21Mo/RYhhbgA==
