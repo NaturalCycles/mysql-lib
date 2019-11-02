@@ -1,3 +1,15 @@
+# [3.0.0](https://github.com/NaturalCycles/mysql-lib/compare/v2.0.2...v3.0.0) (2019-11-02)
+
+
+### Features
+
+* adapt to db-lib@3 ([7d13f54](https://github.com/NaturalCycles/mysql-lib/commit/7d13f540c92dd59b014d1a502c1bff937fad567f))
+
+
+### BREAKING CHANGES
+
+* ^^^
+
 ## [2.0.2](https://github.com/NaturalCycles/mysql-lib/compare/v2.0.1...v2.0.2) (2019-10-20)
 
 
