@@ -1,4 +1,5 @@
 import { createTestItemDBM, createTestItemsDBM, DBQuery, TEST_TABLE } from '@naturalcycles/db-lib'
+import { _range } from '@naturalcycles/js-lib'
 import { dbQueryToSQLDelete, dbQueryToSQLSelect, dbQueryToSQLUpdate, insertSQL } from './query.util'
 
 test('dbQueryToSQLSelect', () => {
@@ -46,7 +47,7 @@ test('dbQueryToSQLDelete', () => {
 
 test('insertSQL', () => {
   const items = createTestItemsDBM(3)
-  const sql = insertSQL(TEST_TABLE, items)
+  const [sql] = insertSQL(TEST_TABLE, items)
   // console.log(sql)
   expect(sql).toMatchSnapshot()
 })
@@ -61,4 +62,12 @@ test('dbQueryToSQLUpdate', () => {
   sql = dbQueryToSQLUpdate(new DBQuery(TEST_TABLE).filter('a', '>', 5), item)
   // console.log(sql)
   expect(sql).toMatchSnapshot()
+})
+
+test('large sql query split', () => {
+  const items = createTestItemsDBM(10).map(r => ({ ...r, lng: 'xxx'.repeat(80000) }))
+  const sqls = insertSQL(TEST_TABLE, items)
+  // console.log(sqls)
+  console.log(sqls.length)
+  expect(sqls.length).toBeGreaterThan(1)
 })

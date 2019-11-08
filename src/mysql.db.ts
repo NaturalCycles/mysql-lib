@@ -10,7 +10,7 @@ import {
 } from '@naturalcycles/db-lib'
 import { filterUndefinedValues, logMethod, memo } from '@naturalcycles/js-lib'
 import { Debug, ReadableTyped } from '@naturalcycles/nodejs-lib'
-import { Connection, Pool, PoolConfig, PoolConnection, TypeCast } from 'mysql'
+import { Connection, Pool, PoolConfig, PoolConnection, QueryOptions, TypeCast } from 'mysql'
 import * as mysql from 'mysql'
 import { Transform } from 'stream'
 import { promisify } from 'util'
@@ -21,12 +21,7 @@ import {
   mysqlTableStatsToCommonSchemaField,
 } from './schema/mysql.schema.util'
 
-export interface MysqlDBOptions extends CommonDBOptions {
-  /**
-   * If passed - will use that connection.
-   */
-  con?: Connection
-}
+export interface MysqlDBOptions extends CommonDBOptions {}
 export interface MysqlDBSaveOptions extends CommonDBSaveOptions {}
 
 /**
@@ -59,6 +54,7 @@ export class MysqlDB implements CommonDB {
   constructor(cfg: MysqlDBCfg) {
     this.cfg = {
       typeCast,
+      // charset: 'utf8mb4', // for emoji support
       ...cfg,
     }
   }
@@ -159,19 +155,15 @@ export class MysqlDB implements CommonDB {
     opt: MysqlDBOptions = {},
   ): Promise<RunQueryResult<DBM>> {
     const sql = dbQueryToSQLSelect(q)
-    const records = await this.runSQL<DBM[]>(sql)
+    const records = await this.runSQL<DBM[]>({ sql })
     return { records: records.map(r => filterUndefinedValues(r, true)) }
   }
 
-  async runSQL<RESULT>(sql: string, opt: MysqlDBOptions = {}): Promise<RESULT> {
-    if (this.cfg.logSQL) log(sql)
+  async runSQL<RESULT>(q: QueryOptions): Promise<RESULT> {
+    if (this.cfg.logSQL) log(q.sql, q.values)
 
     return new Promise(async (resolve, reject) => {
-      // const con = opt.con || (await this.getConnection())
-      ;(opt.con ? opt.con : this.pool()).query(sql, (err, res) => {
-        // if ((con as PoolConnection).release) {
-        //   ;(con as PoolConnection).release()
-        // }
+      this.pool().query(q, (err, res) => {
         if (err) return reject(err)
         resolve(res)
       })
@@ -215,8 +207,13 @@ export class MysqlDB implements CommonDB {
     opt?: MysqlDBSaveOptions,
   ): Promise<void> {
     if (!dbms.length) return
-    const sql = insertSQL(table, dbms)
-    await this.runSQL(sql)
+
+    // inserts are split into multiple sentenses to respect the max_packet_size (1Mb usually)
+    const sqls = insertSQL(table, dbms)
+
+    for await (const sql of sqls) {
+      await this.runSQL({ sql })
+    }
   }
 
   // DELETE
@@ -226,7 +223,7 @@ export class MysqlDB implements CommonDB {
   async deleteByIds(table: string, ids: string[], opt?: MysqlDBOptions): Promise<number> {
     if (!ids.length) return 0
     const sql = dbQueryToSQLDelete(new DBQuery(table).filterEq('id', ids))
-    const res = await this.runSQL<any>(sql)
+    const res = await this.runSQL<any>({ sql })
     return res.affectedRows
   }
 
@@ -235,7 +232,7 @@ export class MysqlDB implements CommonDB {
     opt?: CommonDBOptions,
   ): Promise<number> {
     const sql = dbQueryToSQLDelete(q)
-    const res = await this.runSQL<any>(sql)
+    const res = await this.runSQL<any>({ sql })
     return res.affectedRows
   }
 
@@ -243,7 +240,7 @@ export class MysqlDB implements CommonDB {
    * Use with caution!
    */
   async dropTable(table: string): Promise<void> {
-    await this.runSQL(`DROP TABLE IF EXISTS ${table}`)
+    await this.runSQL({ sql: `DROP TABLE IF EXISTS ${table}` })
   }
 
   /**
@@ -252,18 +249,20 @@ export class MysqlDB implements CommonDB {
   async createTable(schema: CommonSchema, dropIfExists = false): Promise<void> {
     if (dropIfExists) await this.dropTable(schema.table)
 
-    const ddl = commonSchemaToMySQLDDL(schema)
-    await this.runSQL(ddl)
+    const sql = commonSchemaToMySQLDDL(schema)
+    await this.runSQL({ sql })
   }
 
   async getTables(): Promise<string[]> {
-    return (await this.runSQL<object[]>(`show tables`))
+    return (await this.runSQL<object[]>({ sql: `show tables` }))
       .map(r => Object.values(r)[0])
       .filter(Boolean)
   }
 
   async getTableSchema<DBM extends SavedDBEntity>(table: string): Promise<CommonSchema<DBM>> {
-    const statsArray = await this.runSQL<MySQLTableStats[]>(`describe ${mysql.escapeId(table)}`)
+    const statsArray = await this.runSQL<MySQLTableStats[]>({
+      sql: `describe ${mysql.escapeId(table)}`,
+    })
 
     return {
       table,

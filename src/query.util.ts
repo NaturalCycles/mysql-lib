@@ -1,5 +1,10 @@
 import { DBQuery } from '@naturalcycles/db-lib'
+import { hb, yellow } from '@naturalcycles/nodejs-lib'
+import { QueryOptions } from 'mysql'
 import * as mysql from 'mysql'
+
+const MAX_PACKET_SIZE = 1024 * 1024 // 1Mb
+const MAX_ROW_SIZE = 800 * 1024 // 1Mb - margin
 
 export function dbQueryToSQLSelect(q: DBQuery): string {
   const tokens = selectTokens(q)
@@ -28,15 +33,16 @@ export function dbQueryToSQLDelete(q: DBQuery): string {
   return tokens.join(' ')
 }
 
+/**
+ * Returns array of sql statements to respect the max sql size.
+ */
 export function insertSQL(
   table: string,
   records: object[],
   verb: 'INSERT' | 'REPLACE' = 'INSERT',
-): string {
+): string[] {
   // INSERT INTO table_name (column1, column2, column3, ...)
   // VALUES (value1, value2, value3, ...);
-
-  const tokens = [verb, `INTO`, mysql.escapeId(table)]
 
   const fieldSet = records.reduce((set: Set<string>, rec) => {
     Object.keys(rec).forEach(field => set.add(field))
@@ -44,15 +50,46 @@ export function insertSQL(
   }, new Set<string>())
   const fields = [...fieldSet]
 
-  tokens.push(`(` + [...fields].map(f => mysql.escapeId(f)).join(',') + `)`, `VALUES\n`)
+  const start = [
+    verb,
+    `INTO`,
+    mysql.escapeId(table),
+    `(` + [...fields].map(f => mysql.escapeId(f)).join(',') + `)`,
+    `VALUES\n`,
+  ].join(' ')
 
   const valueRows = records.map(rec => {
     return `(` + fields.map(k => mysql.escape(rec[k])).join(',') + `)`
   })
 
-  tokens.push(valueRows.join(',\n '))
+  const full = start + valueRows.join(',\n')
 
-  return tokens.join(' ')
+  if (full.length < MAX_PACKET_SIZE) return [full]
+
+  const sqls: string[] = []
+  let sql: string | undefined
+
+  valueRows.forEach(vrow => {
+    if (!sql) {
+      sql = start + vrow
+    } else {
+      if (sql.length + vrow.length >= MAX_ROW_SIZE) {
+        sqls.push(sql)
+        sql = start + vrow // reset
+      } else {
+        sql += ',\n ' + vrow // add
+      }
+    }
+  })
+
+  if (sql) {
+    sqls.push(sql) // last one
+  }
+
+  console.log(`large sql query (${yellow(hb(full.length))}) was split into ${sqls.length} chunks`)
+
+  return sqls
+
   // todo: handle "upsert" later
 }
 
@@ -77,6 +114,13 @@ export function insertSQLSingle(table: string, record: object): string {
   ]
 
   return tokens.join(' ')
+}
+
+export function insertSQLSetSingle(table: string, record: object): QueryOptions {
+  return {
+    sql: `INSERT INTO ${mysql.escapeId(table)} SET ?`,
+    values: [record],
+  }
 }
 
 export function dbQueryToSQLUpdate(q: DBQuery, record: object): string {
