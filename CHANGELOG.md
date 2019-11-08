@@ -1,3 +1,11 @@
+# [3.1.0](https://github.com/NaturalCycles/mysql-lib/compare/v3.0.0...v3.1.0) (2019-11-08)
+
+
+### Features
+
+* commonSchemaToMySQLDDL ([09168c5](https://github.com/NaturalCycles/mysql-lib/commit/09168c563cbb629ca47121a1aac6a125dd23c144))
+* implement getTables(), getTableSchema() ([20a7746](https://github.com/NaturalCycles/mysql-lib/commit/20a7746c8c4c88dfca8365d1e8d2decce3f47efa))
+
 # [3.0.0](https://github.com/NaturalCycles/mysql-lib/compare/v2.0.2...v3.0.0) (2019-11-02)
 
 
