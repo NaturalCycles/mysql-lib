@@ -1,4 +1,5 @@
 import {
+  createTestItemsDBM,
   getTestItemSchema,
   runCommonDaoTest,
   runCommonDBTest,
@@ -22,7 +23,8 @@ const db = new MysqlDB({
   user: MYSQL_USER,
   password: MYSQL_PW,
   database: MYSQL_DB,
-  logSQL: true,
+  charset: 'utf8mb4',
+  // logSQL: true,
   // debugConnections: true,
   // debug: true,
   // multipleStatements: true,
@@ -45,4 +47,10 @@ test('getTableSchema', async () => {
   const schema = await db.getTableSchema(TEST_TABLE)
   console.log(schema)
   expect(getTestItemSchema()).toMatchObject(schema)
+})
+
+test('emojis', async () => {
+  const items = createTestItemsDBM(5).map(r => ({ ...r, k1: `😣` }))
+  // should not throw
+  await db.saveBatch(TEST_TABLE, items)
 })
