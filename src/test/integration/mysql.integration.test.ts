@@ -1,4 +1,9 @@
-import { getTestItemSchema, runCommonDaoTest, runCommonDBTest } from '@naturalcycles/db-lib'
+import {
+  getTestItemSchema,
+  runCommonDaoTest,
+  runCommonDBTest,
+  TEST_TABLE,
+} from '@naturalcycles/db-lib'
 import { requireEnvKeys } from '@naturalcycles/nodejs-lib'
 import { MysqlDB } from '../../mysql.db'
 require('dotenv').config()
@@ -34,3 +39,10 @@ afterAll(async () => {
 describe('runCommonDBTest', () => runCommonDBTest(db))
 
 describe('runCommonDaoTest', () => runCommonDaoTest(db))
+
+test('getTableSchema', async () => {
+  // console.log(await db.getTables())
+  const schema = await db.getTableSchema(TEST_TABLE)
+  console.log(schema)
+  expect(getTestItemSchema()).toMatchObject(schema)
+})

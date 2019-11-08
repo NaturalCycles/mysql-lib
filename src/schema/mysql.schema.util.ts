@@ -1,5 +1,12 @@
 import { CommonSchema, CommonSchemaField, DATA_TYPE } from '@naturalcycles/db-lib'
+import { filterFalsyValues } from '@naturalcycles/js-lib'
 import * as mysql from 'mysql'
+
+export interface MySQLTableStats {
+  Field: string // created
+  Type: string // int(11)
+  Null: string // 'YES'
+}
 
 export interface MySQLSchemaOptions {
   /**
@@ -55,14 +62,31 @@ function commonSchemaFieldToDDL(f: CommonSchemaField): string {
   return tokens.join(' ')
 }
 
-// CREATE TABLE test_table (
-//   id varchar(255) NOT NULL,
-//   created int(11) DEFAULT NULL,
-//   updated int(11) DEFAULT NULL,
-//   _ver int(11) DEFAULT NULL,
-//   k1 varchar(255) DEFAULT NULL,
-//   k2 varchar(255) DEFAULT NULL,
-//   k3 int(11) DEFAULT NULL,
-//   even boolean default null,
-//   PRIMARY KEY (id)
-// ) ENGINE=InnoDB`)
+export function mysqlTableStatsToCommonSchemaField(s: MySQLTableStats): CommonSchemaField {
+  const { Field: name } = s
+  const notNull = (s.Null || '').toUpperCase() !== 'YES'
+
+  let type: DATA_TYPE = DATA_TYPE.UNKNOWN
+
+  const t = (s.Type || '').toLowerCase()
+
+  if (t) {
+    if (t.includes('text') || t.includes('char')) {
+      type = DATA_TYPE.STRING
+    } else if (t.includes('lob')) {
+      type = DATA_TYPE.BINARY
+    } else if (t.startsWith('tinyint') || t.includes('(1)')) {
+      type = DATA_TYPE.BOOLEAN
+    } else if (t.startsWith('int(')) {
+      type = DATA_TYPE.INT
+    } else if (t.startsWith('float')) {
+      type = DATA_TYPE.FLOAT
+    }
+  }
+
+  return filterFalsyValues({
+    name,
+    type,
+    notNull,
+  })
+}

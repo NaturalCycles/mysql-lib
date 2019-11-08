@@ -15,7 +15,11 @@ import * as mysql from 'mysql'
 import { Transform } from 'stream'
 import { promisify } from 'util'
 import { dbQueryToSQLDelete, dbQueryToSQLSelect, insertSQL } from './query.util'
-import { commonSchemaToMySQLDDL } from './schema/mysql.schema.util'
+import {
+  commonSchemaToMySQLDDL,
+  MySQLTableStats,
+  mysqlTableStatsToCommonSchemaField,
+} from './schema/mysql.schema.util'
 
 export interface MysqlDBOptions extends CommonDBOptions {
   /**
@@ -253,13 +257,17 @@ export class MysqlDB implements CommonDB {
   }
 
   async getTables(): Promise<string[]> {
-    return [] // todo
+    return (await this.runSQL<object[]>(`show tables`))
+      .map(r => Object.values(r)[0])
+      .filter(Boolean)
   }
 
   async getTableSchema<DBM extends SavedDBEntity>(table: string): Promise<CommonSchema<DBM>> {
+    const statsArray = await this.runSQL<MySQLTableStats[]>(`describe ${mysql.escapeId(table)}`)
+
     return {
       table,
-      fields: [], // todo
+      fields: statsArray.map(stats => mysqlTableStatsToCommonSchemaField(stats)),
     }
   }
 }
