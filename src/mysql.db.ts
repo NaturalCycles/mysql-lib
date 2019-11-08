@@ -3,6 +3,7 @@ import {
   CommonDB,
   CommonDBOptions,
   CommonDBSaveOptions,
+  CommonSchema,
   DBQuery,
   RunQueryResult,
   SavedDBEntity,
@@ -14,6 +15,7 @@ import * as mysql from 'mysql'
 import { Transform } from 'stream'
 import { promisify } from 'util'
 import { dbQueryToSQLDelete, dbQueryToSQLSelect, insertSQL } from './query.util'
+import { commonSchemaToMySQLDDL } from './schema/mysql.schema.util'
 
 export interface MysqlDBOptions extends CommonDBOptions {
   /**
@@ -231,5 +233,33 @@ export class MysqlDB implements CommonDB {
     const sql = dbQueryToSQLDelete(q)
     const res = await this.runSQL<any>(sql)
     return res.affectedRows
+  }
+
+  /**
+   * Use with caution!
+   */
+  async dropTable(table: string): Promise<void> {
+    await this.runSQL(`DROP TABLE IF EXISTS ${table}`)
+  }
+
+  /**
+   * dropIfExists=true needed as a safety check
+   */
+  async createTable(schema: CommonSchema, dropIfExists = false): Promise<void> {
+    if (dropIfExists) await this.dropTable(schema.table)
+
+    const ddl = commonSchemaToMySQLDDL(schema)
+    await this.runSQL(ddl)
+  }
+
+  async getTables(): Promise<string[]> {
+    return [] // todo
+  }
+
+  async getTableSchema<DBM extends SavedDBEntity>(table: string): Promise<CommonSchema<DBM>> {
+    return {
+      table,
+      fields: [], // todo
+    }
   }
 }

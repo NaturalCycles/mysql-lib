@@ -1,4 +1,4 @@
-import { runCommonDaoTest, runCommonDBTest } from '@naturalcycles/db-lib'
+import { getTestItemSchema, runCommonDaoTest, runCommonDBTest } from '@naturalcycles/db-lib'
 import { requireEnvKeys } from '@naturalcycles/nodejs-lib'
 import { MysqlDB } from '../../mysql.db'
 require('dotenv').config()
@@ -18,26 +18,13 @@ const db = new MysqlDB({
   password: MYSQL_PW,
   database: MYSQL_DB,
   logSQL: true,
-  debugConnections: true,
+  // debugConnections: true,
   // debug: true,
   // multipleStatements: true,
 })
 
 beforeAll(async () => {
-  await db.runSQL(`DROP TABLE IF EXISTS test_table`)
-
-  await db.runSQL(`
-CREATE TABLE test_table (
-  id varchar(255) NOT NULL,
-  created int(11) DEFAULT NULL,
-  updated int(11) DEFAULT NULL,
-  _ver int(11) DEFAULT NULL,
-  k1 varchar(255) DEFAULT NULL,
-  k2 varchar(255) DEFAULT NULL,
-  k3 int(11) DEFAULT NULL,
-  even boolean default null,
-  PRIMARY KEY (id)
-) ENGINE=InnoDB`)
+  await db.createTable(getTestItemSchema(), true)
 })
 
 afterAll(async () => {
