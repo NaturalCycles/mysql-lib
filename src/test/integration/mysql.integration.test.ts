@@ -7,7 +7,7 @@ import {
   runCommonDBTest,
   TEST_TABLE,
 } from '@naturalcycles/db-lib'
-import { requireEnvKeys } from '@naturalcycles/nodejs-lib'
+import { requireEnvKeys, unzipToString, zipString } from '@naturalcycles/nodejs-lib'
 import { MysqlDB } from '../../mysql.db'
 
 require('dotenv').config()
@@ -74,5 +74,27 @@ test('fieldName with dot', async () => {
   await db.saveBatch(table, items)
   const { records } = await db.runQuery(new DBQuery(table))
   // console.log(items2)
+  expect(records).toEqual(items)
+})
+
+test('buffer', async () => {
+  const table = TEST_TABLE + '2'
+
+  const extra = await zipString('hello buffer')
+
+  const items = createTestItemsDBM(5).map(r => ({ ...r, extra }))
+
+  const schema = getTestItemSchema()
+  schema.fields.push({
+    name: 'extra',
+    type: DATA_TYPE.BINARY,
+  })
+  schema.table = table
+
+  await db.createTable(schema, { dropIfExists: true })
+  await db.saveBatch(table, items)
+  const { records } = await db.runQuery(new DBQuery(table))
+  // console.log(items2)
+  console.log(await unzipToString(records[0].extra))
   expect(records).toEqual(items)
 })

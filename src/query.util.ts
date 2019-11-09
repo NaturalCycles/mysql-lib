@@ -1,5 +1,5 @@
 import { DBQuery } from '@naturalcycles/db-lib'
-import { hb, yellow } from '@naturalcycles/nodejs-lib'
+import { hb, white, yellow } from '@naturalcycles/nodejs-lib'
 import { QueryOptions } from 'mysql'
 import * as mysql from 'mysql'
 import { mapNameToMySQL } from './schema/mysql.schema.util'
@@ -87,7 +87,11 @@ export function insertSQL(
     sqls.push(sql) // last one
   }
 
-  console.log(`large sql query (${yellow(hb(full.length))}) was split into ${sqls.length} chunks`)
+  console.log(
+    `${white(table)} large sql query (${yellow(hb(full.length))}) was split into ${
+      sqls.length
+    } chunks`,
+  )
 
   return sqls
 

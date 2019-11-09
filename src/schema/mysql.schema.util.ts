@@ -41,7 +41,7 @@ const typeToMySQLType: Record<DATA_TYPE, string> = {
   [DATA_TYPE.TIMESTAMP]: `INT(11)`,
   [DATA_TYPE.FLOAT]: `FLOAT(11)`,
   [DATA_TYPE.BOOLEAN]: `TINYINT(1)`,
-  [DATA_TYPE.BINARY]: `BLOB`,
+  [DATA_TYPE.BINARY]: `LONGBLOB`,
   [DATA_TYPE.ARRAY]: `LONGTEXT`, // will be JSON.stringified
   [DATA_TYPE.OBJECT]: `LONGTEXT`, // will be JSON.stringified
   [DATA_TYPE.NULL]: `VARCHAR(255)`,
