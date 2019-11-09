@@ -1,3 +1,10 @@
+# [3.3.0](https://github.com/NaturalCycles/mysql-lib/compare/v3.2.1...v3.3.0) (2019-11-09)
+
+
+### Features
+
+* mapNameToMySQL ([c4bf40c](https://github.com/NaturalCycles/mysql-lib/commit/c4bf40cd6aefaf78219a2588ec803cf74004bc07))
+
 ## [3.2.1](https://github.com/NaturalCycles/mysql-lib/compare/v3.2.0...v3.2.1) (2019-11-09)
 
 
