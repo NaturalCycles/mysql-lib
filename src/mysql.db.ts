@@ -9,8 +9,8 @@ import {
   RunQueryResult,
   SavedDBEntity,
 } from '@naturalcycles/db-lib'
-import { _mapKeys, _mapValues, filterUndefinedValues, logMethod, memo } from '@naturalcycles/js-lib'
-import { Debug, ReadableTyped } from '@naturalcycles/nodejs-lib'
+import { _mapKeys, _mapValues, filterUndefinedValues, memo } from '@naturalcycles/js-lib'
+import { Debug, ReadableTyped, white } from '@naturalcycles/nodejs-lib'
 import { Connection, Pool, PoolConfig, PoolConnection, QueryOptions, TypeCast } from 'mysql'
 import * as mysql from 'mysql'
 import { Transform } from 'stream'
@@ -53,10 +53,14 @@ const typeCast: TypeCast = (field, next) => {
 }
 
 export class MysqlDB implements CommonDB {
-  constructor(cfg: MysqlDBCfg) {
+  constructor(cfg: MysqlDBCfg = {}) {
     this.cfg = {
       typeCast,
       // charset: 'utf8mb4', // for emoji support
+      // host: 'localhost',
+      // user: MYSQL_USER,
+      // password: MYSQL_PW,
+      // database: MYSQL_DB,
       ...cfg,
     }
   }
@@ -64,7 +68,6 @@ export class MysqlDB implements CommonDB {
   cfg!: MysqlDBCfg
 
   async init(): Promise<void> {
-    this.pool()
     const con = await this.getConnection()
     con.release()
   }
@@ -72,9 +75,10 @@ export class MysqlDB implements CommonDB {
   async resetCache(table?: string): Promise<void> {}
 
   @memo()
-  @logMethod({ logResult: false })
   pool(): Pool {
     const pool = mysql.createPool(this.cfg)
+    const { host, database } = this.cfg
+    log(`connected to ${white(host + '/' + database)}`)
 
     if (this.cfg.debugConnections) {
       pool.on('acquire', con => {
