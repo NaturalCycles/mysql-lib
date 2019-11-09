@@ -1,6 +1,7 @@
 import {
   BaseDBEntity,
   CommonDB,
+  CommonDBCreateOptions,
   CommonDBOptions,
   CommonDBSaveOptions,
   CommonSchema,
@@ -246,8 +247,8 @@ export class MysqlDB implements CommonDB {
   /**
    * dropIfExists=true needed as a safety check
    */
-  async createTable(schema: CommonSchema, dropIfExists = false): Promise<void> {
-    if (dropIfExists) await this.dropTable(schema.table)
+  async createTable(schema: CommonSchema, opt: CommonDBCreateOptions = {}): Promise<void> {
+    if (opt.dropIfExists) await this.dropTable(schema.table)
 
     const sql = commonSchemaToMySQLDDL(schema)
     await this.runSQL({ sql })

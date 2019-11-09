@@ -31,7 +31,7 @@ const db = new MysqlDB({
 })
 
 beforeAll(async () => {
-  await db.createTable(getTestItemSchema(), true)
+  await db.createTable(getTestItemSchema(), { dropIfExists: true })
 })
 
 afterAll(async () => {
