@@ -1,3 +1,15 @@
+# [3.2.0](https://github.com/NaturalCycles/mysql-lib/compare/v3.1.0...v3.2.0) (2019-11-09)
+
+
+### Bug Fixes
+
+* emoji support ([1262fc4](https://github.com/NaturalCycles/mysql-lib/commit/1262fc4d9ad39c818833b5cfc31b3a65979cdea0))
+
+
+### Features
+
+* auto split long sql queries ([c7c780f](https://github.com/NaturalCycles/mysql-lib/commit/c7c780f295d7ded9f418509f3160a512ec54c7e7))
+
 # [3.1.0](https://github.com/NaturalCycles/mysql-lib/compare/v3.0.0...v3.1.0) (2019-11-08)
 
 
