@@ -1,3 +1,10 @@
+## [3.2.1](https://github.com/NaturalCycles/mysql-lib/compare/v3.2.0...v3.2.1) (2019-11-09)
+
+
+### Bug Fixes
+
+* createTable() ([7983085](https://github.com/NaturalCycles/mysql-lib/commit/7983085017562a4e4a8f7dd38eb41ae6b9fc30ed))
+
 # [3.2.0](https://github.com/NaturalCycles/mysql-lib/compare/v3.1.0...v3.2.0) (2019-11-09)
 
 
