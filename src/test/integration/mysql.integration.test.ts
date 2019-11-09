@@ -98,3 +98,19 @@ test('buffer', async () => {
   console.log(await unzipToString(records[0].extra))
   expect(records).toEqual(items)
 })
+
+test('stringify objects', async () => {
+  const [item] = createTestItemsDBM(1)
+  item.k1 = { some: 'obj', c: 'd', e: 5 } as any
+
+  await db.createTable(getTestItemSchema(), { dropIfExists: true })
+  await db.saveBatch(TEST_TABLE, [item])
+  const { records } = await db.runQuery(new DBQuery(TEST_TABLE))
+  // console.log(records)
+  expect(records).toEqual([
+    {
+      ...item,
+      k1: JSON.stringify(item.k1),
+    },
+  ])
+})

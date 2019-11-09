@@ -9,7 +9,7 @@ import {
   RunQueryResult,
   SavedDBEntity,
 } from '@naturalcycles/db-lib'
-import { _mapKeys, filterUndefinedValues, logMethod, memo } from '@naturalcycles/js-lib'
+import { _mapKeys, _mapValues, filterUndefinedValues, logMethod, memo } from '@naturalcycles/js-lib'
 import { Debug, ReadableTyped } from '@naturalcycles/nodejs-lib'
 import { Connection, Pool, PoolConfig, PoolConnection, QueryOptions, TypeCast } from 'mysql'
 import * as mysql from 'mysql'
@@ -209,10 +209,17 @@ export class MysqlDB implements CommonDB {
   // SAVE
   async saveBatch<DBM extends BaseDBEntity>(
     table: string,
-    dbms: DBM[],
+    _dbms: DBM[],
     opt?: MysqlDBSaveOptions,
   ): Promise<void> {
-    if (!dbms.length) return
+    if (!_dbms.length) return
+
+    // Stringify object values
+    const dbms = _dbms.map(dbm =>
+      _mapValues(dbm, v => {
+        return v && typeof v === 'object' && !Buffer.isBuffer(v) ? JSON.stringify(v) : v
+      }),
+    )
 
     // inserts are split into multiple sentenses to respect the max_packet_size (1Mb usually)
     const sqls = insertSQL(table, dbms)

@@ -88,9 +88,9 @@ export function insertSQL(
   }
 
   console.log(
-    `${white(table)} large sql query (${yellow(hb(full.length))}) was split into ${
-      sqls.length
-    } chunks`,
+    `${white(table)} large sql query (${yellow(hb(full.length))}) was split into ${yellow(
+      sqls.length,
+    )} chunks`,
   )
 
   return sqls
