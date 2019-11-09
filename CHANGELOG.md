@@ -1,3 +1,10 @@
+# [3.5.0](https://github.com/NaturalCycles/mysql-lib/compare/v3.4.0...v3.5.0) (2019-11-09)
+
+
+### Features
+
+* implement getDBAdapter. Allow empty (default) configuration ([bcf12dc](https://github.com/NaturalCycles/mysql-lib/commit/bcf12dc9360f525749f9bb10965046b4c56d849a))
+
 # [3.4.0](https://github.com/NaturalCycles/mysql-lib/compare/v3.3.1...v3.4.0) (2019-11-09)
 
 
