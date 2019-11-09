@@ -1,3 +1,10 @@
+## [3.3.1](https://github.com/NaturalCycles/mysql-lib/compare/v3.3.0...v3.3.1) (2019-11-09)
+
+
+### Bug Fixes
+
+* use LONGBLOB for binary columns ([ae4facc](https://github.com/NaturalCycles/mysql-lib/commit/ae4facc76bc03b8aafa5141199a98bef530f6913))
+
 # [3.3.0](https://github.com/NaturalCycles/mysql-lib/compare/v3.2.1...v3.3.0) (2019-11-09)
 
 
