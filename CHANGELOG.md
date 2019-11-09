@@ -1,3 +1,10 @@
+# [3.4.0](https://github.com/NaturalCycles/mysql-lib/compare/v3.3.1...v3.4.0) (2019-11-09)
+
+
+### Features
+
+* auto JSON.stringify objects (and arrays) ([0d9aaed](https://github.com/NaturalCycles/mysql-lib/commit/0d9aaedf8f2920a51dacf13b6723eb98c61b34c3))
+
 ## [3.3.1](https://github.com/NaturalCycles/mysql-lib/compare/v3.3.0...v3.3.1) (2019-11-09)
 
 
