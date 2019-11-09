@@ -1,5 +1,7 @@
 import {
   createTestItemsDBM,
+  DATA_TYPE,
+  DBQuery,
   getTestItemSchema,
   runCommonDaoTest,
   runCommonDBTest,
@@ -7,6 +9,7 @@ import {
 } from '@naturalcycles/db-lib'
 import { requireEnvKeys } from '@naturalcycles/nodejs-lib'
 import { MysqlDB } from '../../mysql.db'
+
 require('dotenv').config()
 
 const { MYSQL_HOST, MYSQL_USER, MYSQL_PW, MYSQL_DB } = requireEnvKeys(
@@ -24,7 +27,7 @@ const db = new MysqlDB({
   password: MYSQL_PW,
   database: MYSQL_DB,
   charset: 'utf8mb4',
-  // logSQL: true,
+  logSQL: true,
   // debugConnections: true,
   // debug: true,
   // multipleStatements: true,
@@ -53,4 +56,23 @@ test('emojis', async () => {
   const items = createTestItemsDBM(5).map(r => ({ ...r, k1: `😣` }))
   // should not throw
   await db.saveBatch(TEST_TABLE, items)
+})
+
+test('fieldName with dot', async () => {
+  const fieldName = 'field.with.dot'
+  const table = TEST_TABLE + '2'
+
+  const items = createTestItemsDBM(5).map(r => ({ ...r, [fieldName]: 'vv' }))
+  const schema = getTestItemSchema()
+  schema.fields.push({
+    name: fieldName,
+    type: DATA_TYPE.STRING,
+  })
+  schema.table = table
+
+  await db.createTable(schema, { dropIfExists: true })
+  await db.saveBatch(table, items)
+  const { records } = await db.runQuery(new DBQuery(table))
+  // console.log(items2)
+  expect(records).toEqual(items)
 })

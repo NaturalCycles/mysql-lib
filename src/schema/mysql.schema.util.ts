@@ -54,7 +54,7 @@ function commonSchemaFieldToDDL(f: CommonSchemaField): string {
   }
 
   const tokens: string[] = [
-    mysql.escapeId(f.name),
+    mysql.escapeId(mapNameToMySQL(f.name)),
     typeToMySQLType[f.type] || typeToMySQLType[DATA_TYPE.UNKNOWN],
     `DEFAULT NULL`,
   ]
@@ -63,7 +63,7 @@ function commonSchemaFieldToDDL(f: CommonSchemaField): string {
 }
 
 export function mysqlTableStatsToCommonSchemaField(s: MySQLTableStats): CommonSchemaField {
-  const { Field: name } = s
+  const name = mapNameFromMySQL(s.Field)
   const notNull = (s.Null || '').toUpperCase() !== 'YES'
 
   let type: DATA_TYPE = DATA_TYPE.UNKNOWN
@@ -89,4 +89,16 @@ export function mysqlTableStatsToCommonSchemaField(s: MySQLTableStats): CommonSc
     type,
     notNull,
   })
+}
+
+/**
+ * Because MySQL doesn't support `.` in field names and escapes them as tableName + fieldName.
+ * @param name
+ */
+export function mapNameToMySQL(name: string): string {
+  return name.replace(/\./g, '_dot_')
+}
+
+export function mapNameFromMySQL(name: string): string {
+  return name.replace(/_dot_/g, '.')
 }

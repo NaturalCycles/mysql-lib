@@ -9,7 +9,7 @@ import {
   RunQueryResult,
   SavedDBEntity,
 } from '@naturalcycles/db-lib'
-import { filterUndefinedValues, logMethod, memo } from '@naturalcycles/js-lib'
+import { _mapKeys, filterUndefinedValues, logMethod, memo } from '@naturalcycles/js-lib'
 import { Debug, ReadableTyped } from '@naturalcycles/nodejs-lib'
 import { Connection, Pool, PoolConfig, PoolConnection, QueryOptions, TypeCast } from 'mysql'
 import * as mysql from 'mysql'
@@ -18,6 +18,7 @@ import { promisify } from 'util'
 import { dbQueryToSQLDelete, dbQueryToSQLSelect, insertSQL } from './query.util'
 import {
   commonSchemaToMySQLDDL,
+  mapNameFromMySQL,
   MySQLTableStats,
   mysqlTableStatsToCommonSchemaField,
 } from './schema/mysql.schema.util'
@@ -147,7 +148,7 @@ export class MysqlDB implements CommonDB {
     if (!ids.length) return []
     const q = new DBQuery<DBM>(table).filterEq('id', ids)
     const { records } = await this.runQuery(q, opt)
-    return records
+    return records.map(r => _mapKeys(r, (_v, k) => mapNameFromMySQL(k)) as any)
   }
 
   // QUERY
@@ -157,7 +158,11 @@ export class MysqlDB implements CommonDB {
   ): Promise<RunQueryResult<DBM>> {
     const sql = dbQueryToSQLSelect(q)
     const records = await this.runSQL<DBM[]>({ sql })
-    return { records: records.map(r => filterUndefinedValues(r, true)) }
+    return {
+      records: records.map(
+        r => _mapKeys(filterUndefinedValues(r, true), (_v, k) => mapNameFromMySQL(k)) as any,
+      ),
+    }
   }
 
   async runSQL<RESULT>(q: QueryOptions): Promise<RESULT> {

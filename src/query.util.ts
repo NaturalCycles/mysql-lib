@@ -2,6 +2,7 @@ import { DBQuery } from '@naturalcycles/db-lib'
 import { hb, yellow } from '@naturalcycles/nodejs-lib'
 import { QueryOptions } from 'mysql'
 import * as mysql from 'mysql'
+import { mapNameToMySQL } from './schema/mysql.schema.util'
 
 const MAX_PACKET_SIZE = 1024 * 1024 // 1Mb
 const MAX_ROW_SIZE = 800 * 1024 // 1Mb - margin
@@ -54,7 +55,7 @@ export function insertSQL(
     verb,
     `INTO`,
     mysql.escapeId(table),
-    `(` + [...fields].map(f => mysql.escapeId(f)).join(',') + `)`,
+    `(` + [...fields].map(f => mysql.escapeId(mapNameToMySQL(f))).join(',') + `)`,
     `VALUES\n`,
   ].join(' ')
 
@@ -102,7 +103,7 @@ export function insertSQLSingle(table: string, record: object): string {
     mysql.escapeId(table),
     `(` +
       Object.keys(record)
-        .map(f => mysql.escapeId(f))
+        .map(f => mysql.escapeId(mapNameToMySQL(f)))
         .join(',') +
       `)`,
     `\nVALUES`,
@@ -130,7 +131,7 @@ export function dbQueryToSQLUpdate(q: DBQuery, record: object): string {
     mysql.escapeId(q.table),
     `SET`,
     Object.keys(record)
-      .map(f => mysql.escapeId(f) + ' = ?')
+      .map(f => mysql.escapeId(mapNameToMySQL(f)) + ' = ?')
       .join(', '),
     ...whereTokens(q),
   ]
@@ -145,7 +146,8 @@ function selectTokens(q: DBQuery): string[] {
     fields = q._selectedFieldNames.length ? q._selectedFieldNames : ['id']
   }
 
-  return [`SELECT`, fields.join(', '), `FROM`, mysql.escapeId(q.table)]
+  // We don't do `escapeId` cause it'll ruin e.g SELECT `count *` FROM ...
+  return [`SELECT`, fields.map(f => mapNameToMySQL(f)).join(', '), `FROM`, mysql.escapeId(q.table)]
 }
 
 function offsetLimitTokens(q: DBQuery): string[] {
@@ -181,15 +183,18 @@ function whereTokens(q: DBQuery): string[] {
         if (f.val === null || f.val === undefined) {
           // special treatment
 
-          return [mysql.escapeId(f.name), f.op === '=' ? 'IS NULL' : 'IS NOT NULL'].join(' ')
+          return [
+            mysql.escapeId(mapNameToMySQL(f.name)),
+            f.op === '=' ? 'IS NULL' : 'IS NOT NULL',
+          ].join(' ')
         }
 
         if (Array.isArray(f.val)) {
           // special case for arrays
-          return `${mysql.escapeId(f.name)} IN (${mysql.escape(f.val)})`
+          return `${mysql.escapeId(mapNameToMySQL(f.name))} IN (${mysql.escape(f.val)})`
         }
 
-        return [mysql.escapeId(f.name), f.op, mysql.escape(f.val)].join(' ')
+        return [mysql.escapeId(mapNameToMySQL(f.name)), f.op, mysql.escape(f.val)].join(' ')
       })
       .join(' AND '),
   ]
