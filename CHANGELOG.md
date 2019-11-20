@@ -1,3 +1,10 @@
+## [3.5.1](https://github.com/NaturalCycles/mysql-lib/compare/v3.5.0...v3.5.1) (2019-11-20)
+
+
+### Bug Fixes
+
+* correctly type-cast booleans with value=NULL ([e208b4c](https://github.com/NaturalCycles/mysql-lib/commit/e208b4ca16f700b6ed7bf95c872f68f934894992))
+
 # [3.5.0](https://github.com/NaturalCycles/mysql-lib/compare/v3.4.0...v3.5.0) (2019-11-09)
 
 
