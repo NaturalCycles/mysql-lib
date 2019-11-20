@@ -1,3 +1,10 @@
+## [3.5.2](https://github.com/NaturalCycles/mysql-lib/compare/v3.5.1...v3.5.2) (2019-11-20)
+
+
+### Bug Fixes
+
+* BIT typecast to boolean correctly ([0bc815e](https://github.com/NaturalCycles/mysql-lib/commit/0bc815e025a33ab9fae5405c8b97dd53aae392ca))
+
 ## [3.5.1](https://github.com/NaturalCycles/mysql-lib/compare/v3.5.0...v3.5.1) (2019-11-20)
 
 
