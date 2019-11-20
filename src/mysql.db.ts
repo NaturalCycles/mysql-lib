@@ -43,10 +43,14 @@ export interface MysqlDBCfg extends PoolConfig {
 
 const log = Debug('nc:mysql-lib')
 
+const BOOLEAN_TYPES = new Set(['TINY', 'BIT'])
+
 const typeCast: TypeCast = (field, next) => {
   // cast TINY and BIT to boolean
-  if (['TINY', 'BIT'].includes(field.type) && field.length === 1) {
-    return field.string() === '1' // 1 = true, 0 = false
+  if (field.length === 1 && BOOLEAN_TYPES.has(field.type)) {
+    const s = field.string()
+    if (s === null || s === undefined) return undefined // null = undefined
+    return s === '1' // 1 = true, 0 = false
   }
 
   return next()
