@@ -1,3 +1,10 @@
+# [3.6.0](https://github.com/NaturalCycles/mysql-lib/compare/v3.5.2...v3.6.0) (2020-03-01)
+
+
+### Features
+
+* deps ([008aa10](https://github.com/NaturalCycles/mysql-lib/commit/008aa10d059734d76c2354553a8dc35c8117b3b2))
+
 ## [3.5.2](https://github.com/NaturalCycles/mysql-lib/compare/v3.5.1...v3.5.2) (2019-11-20)
 
 
