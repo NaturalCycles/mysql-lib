@@ -1,12 +1,11 @@
+import { DATA_TYPE, DBQuery } from '@naturalcycles/db-lib'
 import {
   createTestItemsDBM,
-  DATA_TYPE,
-  DBQuery,
   getTestItemSchema,
   runCommonDaoTest,
   runCommonDBTest,
   TEST_TABLE,
-} from '@naturalcycles/db-lib'
+} from '@naturalcycles/db-lib/dist/testing'
 import { requireEnvKeys, unzipToString, zipString } from '@naturalcycles/nodejs-lib'
 import { MysqlDB } from '../../mysql.db'
 

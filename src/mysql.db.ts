@@ -9,8 +9,9 @@ import {
   RunQueryResult,
   SavedDBEntity,
 } from '@naturalcycles/db-lib'
-import { _mapKeys, _mapValues, filterUndefinedValues, memo } from '@naturalcycles/js-lib'
-import { Debug, ReadableTyped, white } from '@naturalcycles/nodejs-lib'
+import { filterUndefinedValues, memo, _mapKeys, _mapValues } from '@naturalcycles/js-lib'
+import { Debug, ReadableTyped } from '@naturalcycles/nodejs-lib'
+import { white } from '@naturalcycles/nodejs-lib/dist/colors'
 import { Connection, Pool, PoolConfig, PoolConnection, QueryOptions, TypeCast } from 'mysql'
 import * as mysql from 'mysql'
 import { Transform } from 'stream'
@@ -81,7 +82,7 @@ export class MysqlDB implements CommonDB {
 
   cfg!: MysqlDBCfg
 
-  async init(): Promise<void> {
+  async ping(): Promise<void> {
     const con = await this.getConnection()
     con.release()
   }

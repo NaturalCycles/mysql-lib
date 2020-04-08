@@ -1,4 +1,5 @@
-import { createTestItemsBM, InMemoryDB, TEST_TABLE } from '@naturalcycles/db-lib'
+import { InMemoryDB } from '@naturalcycles/db-lib'
+import { createTestItemsBM, TEST_TABLE } from '@naturalcycles/db-lib/dist/testing'
 import { commonSchemaToMySQLDDL } from './mysql.schema.util'
 
 test('commonSchemaToMySQLDDL', async () => {

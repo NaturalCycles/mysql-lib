@@ -1,5 +1,6 @@
 import { DBQuery } from '@naturalcycles/db-lib'
-import { hb, white, yellow } from '@naturalcycles/nodejs-lib'
+import { hb } from '@naturalcycles/nodejs-lib'
+import { white, yellow } from '@naturalcycles/nodejs-lib/dist/colors'
 import { QueryOptions } from 'mysql'
 import * as mysql from 'mysql'
 import { mapNameToMySQL } from './schema/mysql.schema.util'

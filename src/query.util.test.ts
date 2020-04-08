@@ -1,4 +1,9 @@
-import { createTestItemDBM, createTestItemsDBM, DBQuery, TEST_TABLE } from '@naturalcycles/db-lib'
+import { DBQuery } from '@naturalcycles/db-lib'
+import {
+  createTestItemDBM,
+  createTestItemsDBM,
+  TEST_TABLE,
+} from '@naturalcycles/db-lib/dist/testing'
 import { _range } from '@naturalcycles/js-lib'
 import { dbQueryToSQLDelete, dbQueryToSQLSelect, dbQueryToSQLUpdate, insertSQL } from './query.util'
 
@@ -23,10 +28,7 @@ test('dbQueryToSQLSelect', () => {
 
   // NULL cases
   sql = dbQueryToSQLSelect(
-    new DBQuery('TBL1')
-      .filter('a', '=', undefined)
-      .filter('a2', '=', null)
-      .filter('a3', '>', null),
+    new DBQuery('TBL1').filter('a', '=', undefined).filter('a2', '=', null).filter('a3', '>', null),
   )
   // console.log(sql)
   expect(sql).toMatchSnapshot()

@@ -2,24 +2,20 @@
   "name": "@naturalcycles/mysql-lib",
   "scripts": {},
   "peerDependencies": {
-    "@naturalcycles/db-lib": ">=3.0.0"
+    "@naturalcycles/db-lib": ">=4.0.0"
   },
   "dependencies": {
-    "@naturalcycles/db-lib": "^3.0.0",
-    "@naturalcycles/js-lib": "^9.0.0",
-    "@naturalcycles/nodejs-lib": "^7.1.1",
+    "@naturalcycles/db-lib": "^4.4.2",
+    "@naturalcycles/js-lib": "^10.2.0",
+    "@naturalcycles/nodejs-lib": "^9.1.3",
     "@types/mysql": "^2.15.6",
     "mysql": "^2.17.1"
   },
   "devDependencies": {
     "@naturalcycles/dev-lib": "^10.3.0",
-    "@naturalcycles/test-lib": "^1.0.3",
     "@types/node": "^13.7.7",
     "dotenv": "^8.0.0",
     "jest": "^25.1.0"
-  },
-  "resolutions": {
-    "@types/hapi__joi": "15.0.4"
   },
   "files": [
     "dist",
