@@ -1,5 +1,5 @@
 import { CommonSchema, CommonSchemaField, DATA_TYPE } from '@naturalcycles/db-lib'
-import { filterFalsyValues } from '@naturalcycles/js-lib'
+import { _filterFalsyValues } from '@naturalcycles/js-lib'
 import * as mysql from 'mysql'
 
 export interface MySQLTableStats {
@@ -84,7 +84,7 @@ export function mysqlTableStatsToCommonSchemaField(s: MySQLTableStats): CommonSc
     }
   }
 
-  return filterFalsyValues({
+  return _filterFalsyValues({
     name,
     type,
     notNull,

@@ -7,7 +7,7 @@ import {
   TEST_TABLE,
 } from '@naturalcycles/db-lib/dist/testing'
 import { requireEnvKeys, unzipToString, zipString } from '@naturalcycles/nodejs-lib'
-import { MysqlDB } from '../../mysql.db'
+import { MysqlDB } from '../mysql.db'
 
 require('dotenv').config()
 
@@ -71,9 +71,9 @@ test('fieldName with dot', async () => {
 
   await db.createTable(schema, { dropIfExists: true })
   await db.saveBatch(table, items)
-  const { records } = await db.runQuery(new DBQuery(table))
+  const { rows } = await db.runQuery(new DBQuery(table))
   // console.log(items2)
-  expect(records).toEqual(items)
+  expect(rows).toEqual(items)
 })
 
 test('buffer', async () => {
@@ -92,10 +92,10 @@ test('buffer', async () => {
 
   await db.createTable(schema, { dropIfExists: true })
   await db.saveBatch(table, items)
-  const { records } = await db.runQuery(new DBQuery(table))
+  const { rows } = await db.runQuery(new DBQuery(table))
   // console.log(items2)
-  console.log(await unzipToString(records[0].extra))
-  expect(records).toEqual(items)
+  console.log(await unzipToString(rows[0].extra))
+  expect(rows).toEqual(items)
 })
 
 test('stringify objects', async () => {
@@ -104,9 +104,9 @@ test('stringify objects', async () => {
 
   await db.createTable(getTestItemSchema(), { dropIfExists: true })
   await db.saveBatch(TEST_TABLE, [item])
-  const { records } = await db.runQuery(new DBQuery(TEST_TABLE))
+  const { rows } = await db.runQuery(new DBQuery(TEST_TABLE))
   // console.log(records)
-  expect(records).toEqual([
+  expect(rows).toEqual([
     {
       ...item,
       k1: JSON.stringify(item.k1),

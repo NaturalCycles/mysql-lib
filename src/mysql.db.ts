@@ -1,4 +1,5 @@
 import {
+  BaseCommonDB,
   BaseDBEntity,
   CommonDB,
   CommonDBCreateOptions,
@@ -6,10 +7,10 @@ import {
   CommonDBSaveOptions,
   CommonSchema,
   DBQuery,
+  ObjectWithId,
   RunQueryResult,
-  SavedDBEntity,
 } from '@naturalcycles/db-lib'
-import { filterUndefinedValues, memo, _mapKeys, _mapValues } from '@naturalcycles/js-lib'
+import { _filterUndefinedValues, _mapKeys, _mapValues, _Memo } from '@naturalcycles/js-lib'
 import { Debug, ReadableTyped } from '@naturalcycles/nodejs-lib'
 import { white } from '@naturalcycles/nodejs-lib/dist/colors'
 import { Connection, Pool, PoolConfig, PoolConnection, QueryOptions, TypeCast } from 'mysql'
@@ -67,8 +68,9 @@ const typeCast: TypeCast = (field, next) => {
   return next()
 }
 
-export class MysqlDB implements CommonDB {
+export class MysqlDB extends BaseCommonDB implements CommonDB {
   constructor(cfg: MysqlDBCfg = {}) {
+    super()
     this.cfg = {
       typeCast,
       // charset: 'utf8mb4', // for emoji support
@@ -87,9 +89,7 @@ export class MysqlDB implements CommonDB {
     con.release()
   }
 
-  async resetCache(table?: string): Promise<void> {}
-
-  @memo()
+  @_Memo()
   pool(): Pool {
     const pool = mysql.createPool(this.cfg)
     const { host, database } = this.cfg
@@ -159,27 +159,27 @@ export class MysqlDB implements CommonDB {
   }
 
   // GET
-  async getByIds<DBM extends SavedDBEntity>(
+  async getByIds<ROW extends ObjectWithId>(
     table: string,
     ids: string[],
     opt: MysqlDBOptions = {},
-  ): Promise<DBM[]> {
+  ): Promise<ROW[]> {
     if (!ids.length) return []
-    const q = new DBQuery<DBM>(table).filterEq('id', ids)
-    const { records } = await this.runQuery(q, opt)
-    return records.map(r => _mapKeys(r, (_v, k) => mapNameFromMySQL(k)) as any)
+    const q = new DBQuery<ROW>(table).filterEq('id', ids)
+    const { rows } = await this.runQuery(q, opt)
+    return rows.map(r => _mapKeys(r, (_v, k) => mapNameFromMySQL(k)) as any)
   }
 
   // QUERY
-  async runQuery<DBM extends SavedDBEntity>(
-    q: DBQuery<DBM>,
+  async runQuery<ROW extends ObjectWithId, OUT = ROW>(
+    q: DBQuery<ROW>,
     opt: MysqlDBOptions = {},
-  ): Promise<RunQueryResult<DBM>> {
+  ): Promise<RunQueryResult<OUT>> {
     const sql = dbQueryToSQLSelect(q)
-    const records = await this.runSQL<DBM[]>({ sql })
+    const rows = await this.runSQL<ROW[]>({ sql })
     return {
-      records: records.map(
-        r => _mapKeys(filterUndefinedValues(r, true), (_v, k) => mapNameFromMySQL(k)) as any,
+      rows: rows.map(
+        r => _mapKeys(_filterUndefinedValues(r, true), (_v, k) => mapNameFromMySQL(k)) as any,
       ),
     }
   }
@@ -195,16 +195,16 @@ export class MysqlDB implements CommonDB {
     })
   }
 
-  async runQueryCount<DBM extends SavedDBEntity>(
-    q: DBQuery<DBM>,
+  async runQueryCount<ROW extends ObjectWithId>(
+    q: DBQuery<ROW>,
     opt?: CommonDBOptions,
   ): Promise<number> {
-    const { records } = await this.runQuery(q.select(['count(*) as _count']))
-    return (records[0] as any)._count
+    const { rows } = await this.runQuery(q.select(['count(*) as _count']))
+    return (rows[0] as any)._count
   }
 
-  streamQuery<DBM extends SavedDBEntity, OUT = DBM>(
-    q: DBQuery<DBM>,
+  streamQuery<ROW extends ObjectWithId, OUT = ROW>(
+    q: DBQuery<ROW>,
     opt: MysqlDBOptions = {},
   ): ReadableTyped<OUT> {
     const sql = dbQueryToSQLSelect(q)
@@ -218,30 +218,30 @@ export class MysqlDB implements CommonDB {
       .pipe(
         new Transform({
           objectMode: true,
-          transform(dbm, _encoding, cb) {
-            cb(null, filterUndefinedValues(dbm, true))
+          transform(row, _encoding, cb) {
+            cb(null, _filterUndefinedValues(row, true))
           },
         }),
       )
   }
 
   // SAVE
-  async saveBatch<DBM extends BaseDBEntity>(
+  async saveBatch<ROW extends BaseDBEntity>(
     table: string,
-    _dbms: DBM[],
+    _rows: ROW[],
     opt?: MysqlDBSaveOptions,
   ): Promise<void> {
-    if (!_dbms.length) return
+    if (!_rows.length) return
 
     // Stringify object values
-    const dbms = _dbms.map(dbm =>
-      _mapValues(dbm, v => {
+    const rows = _rows.map(row =>
+      _mapValues(row, v => {
         return v && typeof v === 'object' && !Buffer.isBuffer(v) ? JSON.stringify(v) : v
       }),
     )
 
     // inserts are split into multiple sentenses to respect the max_packet_size (1Mb usually)
-    const sqls = insertSQL(table, dbms)
+    const sqls = insertSQL(table, rows)
 
     for await (const sql of sqls) {
       await this.runSQL({ sql })
@@ -259,8 +259,8 @@ export class MysqlDB implements CommonDB {
     return res.affectedRows
   }
 
-  async deleteByQuery<DBM extends SavedDBEntity>(
-    q: DBQuery<DBM>,
+  async deleteByQuery<ROW extends ObjectWithId>(
+    q: DBQuery<ROW>,
     opt?: CommonDBOptions,
   ): Promise<number> {
     const sql = dbQueryToSQLDelete(q)
@@ -291,7 +291,7 @@ export class MysqlDB implements CommonDB {
       .filter(Boolean)
   }
 
-  async getTableSchema<DBM extends SavedDBEntity>(table: string): Promise<CommonSchema<DBM>> {
+  async getTableSchema<ROW extends ObjectWithId>(table: string): Promise<CommonSchema<ROW>> {
     const statsArray = await this.runSQL<MySQLTableStats[]>({
       sql: `describe ${mysql.escapeId(table)}`,
     })

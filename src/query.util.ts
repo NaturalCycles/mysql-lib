@@ -1,5 +1,5 @@
 import { DBQuery } from '@naturalcycles/db-lib'
-import { hb } from '@naturalcycles/nodejs-lib'
+import { _hb } from '@naturalcycles/js-lib'
 import { white, yellow } from '@naturalcycles/nodejs-lib/dist/colors'
 import { QueryOptions } from 'mysql'
 import * as mysql from 'mysql'
@@ -89,7 +89,7 @@ export function insertSQL(
   }
 
   console.log(
-    `${white(table)} large sql query (${yellow(hb(full.length))}) was split into ${yellow(
+    `${white(table)} large sql query (${yellow(_hb(full.length))}) was split into ${yellow(
       sqls.length,
     )} chunks`,
   )
