@@ -1,3 +1,10 @@
+## [3.7.1](https://github.com/NaturalCycles/mysql-lib/compare/v3.7.0...v3.7.1) (2020-06-03)
+
+
+### Bug Fixes
+
+* modernize ([517f695](https://github.com/NaturalCycles/mysql-lib/commit/517f6952feb15059730f4f7443a295bf596053fc))
+
 # [3.7.0](https://github.com/NaturalCycles/mysql-lib/compare/v3.6.0...v3.7.0) (2020-04-08)
 
 
