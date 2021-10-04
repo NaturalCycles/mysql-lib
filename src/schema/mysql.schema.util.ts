@@ -1,5 +1,10 @@
-import { CommonSchema, CommonSchemaField, DATA_TYPE } from '@naturalcycles/db-lib'
-import { _filterFalsyValues } from '@naturalcycles/js-lib'
+import {
+  JsonSchemaBoolean,
+  JsonSchemaNumber,
+  JsonSchemaObject,
+  JsonSchemaRootObject,
+  JsonSchemaString,
+} from '@naturalcycles/js-lib'
 import * as mysql from 'mysql'
 
 export interface MySQLTableStats {
@@ -18,14 +23,53 @@ export interface MySQLSchemaOptions {
 /**
  * It currently skips nullability and declares everything as "DEFAULT NULL".
  */
-export function commonSchemaToMySQLDDL(schema: CommonSchema, opt: MySQLSchemaOptions = {}): string {
+export function jsonSchemaToMySQLDDL(
+  table: string,
+  schema: JsonSchemaObject<any>,
+  opt: MySQLSchemaOptions = {},
+): string {
   const { engine = 'InnoDB' } = opt
-
-  const { table, fields } = schema
 
   const lines: string[] = [`CREATE TABLE ${mysql.escapeId(table)} (`]
 
-  const innerLines = fields.map(f => commonSchemaFieldToDDL(f))
+  const innerLines = Object.entries(schema.properties).map(([k, s]) => {
+    if (k === 'id') {
+      return `id VARCHAR(255) NOT NULL`
+    }
+
+    let type
+
+    if (s.type === 'string') {
+      // can specify isoDate later
+      type = 'LONGTEXT'
+    } else if (s.type === 'integer') {
+      type = 'INT(11)'
+    } else if (s.type === 'number') {
+      if (['unixTimestamp', 'int32'].includes((s as JsonSchemaNumber).format!)) {
+        type = 'INT(11)'
+      } else {
+        type = 'FLOAT(11)'
+      }
+    } else if (s.type === 'boolean') {
+      type = 'TINYINT(1)'
+    } else if (s.instanceof === 'Buffer') {
+      type = 'LONGBLOB'
+    } else if (s.type === 'null') {
+      type = 'VARCHAR(255)'
+    } else if (s.type === 'array') {
+      type = 'LONGTEXT' // to be JSON.stringified?
+    } else if (s.type === 'object') {
+      type = 'LONGTEXT' // to be JSON.stringified?
+    } else {
+      // default
+      type = 'LONGTEXT'
+    }
+
+    const tokens: string[] = [mysql.escapeId(mapNameToMySQL(k)), type, `DEFAULT NULL`]
+
+    return tokens.join(' ')
+  })
+
   innerLines.push(`PRIMARY KEY (id)`)
 
   lines.push(innerLines.join(',\n'))
@@ -34,65 +78,48 @@ export function commonSchemaToMySQLDDL(schema: CommonSchema, opt: MySQLSchemaOpt
   return lines.join('\n')
 }
 
-const typeToMySQLType: Record<DATA_TYPE, string> = {
-  [DATA_TYPE.STRING]: `LONGTEXT`,
-  [DATA_TYPE.LOCAL_DATE]: `VARCHAR(255)`,
-  [DATA_TYPE.INT]: `INT(11)`,
-  [DATA_TYPE.TIMESTAMP]: `INT(11)`,
-  [DATA_TYPE.FLOAT]: `FLOAT(11)`,
-  [DATA_TYPE.BOOLEAN]: `TINYINT(1)`,
-  [DATA_TYPE.BINARY]: `LONGBLOB`,
-  [DATA_TYPE.ARRAY]: `LONGTEXT`, // will be JSON.stringified
-  [DATA_TYPE.OBJECT]: `LONGTEXT`, // will be JSON.stringified
-  [DATA_TYPE.NULL]: `VARCHAR(255)`,
-  [DATA_TYPE.UNKNOWN]: `LONGTEXT`,
-}
-
-function commonSchemaFieldToDDL(f: CommonSchemaField): string {
-  if (f.name === 'id') {
-    return `id VARCHAR(255) NOT NULL`
+export function mysqlTableStatsToJsonSchemaField<T = any>(
+  table: string,
+  stats: MySQLTableStats[],
+): JsonSchemaRootObject<T> {
+  const s: JsonSchemaRootObject<T> = {
+    $id: `${table}.schema.json`,
+    type: 'object',
+    properties: {} as any,
+    required: [],
+    additionalProperties: true,
   }
 
-  const tokens: string[] = [
-    mysql.escapeId(mapNameToMySQL(f.name)),
-    typeToMySQLType[f.type] || typeToMySQLType[DATA_TYPE.UNKNOWN],
-    `DEFAULT NULL`,
-  ]
-
-  return tokens.join(' ')
-}
-
-export function mysqlTableStatsToCommonSchemaField(s: MySQLTableStats): CommonSchemaField {
-  const name = mapNameFromMySQL(s.Field)
-  const notNull = (s.Null || '').toUpperCase() !== 'YES'
-
-  let type: DATA_TYPE = DATA_TYPE.UNKNOWN
-
-  const t = (s.Type || '').toLowerCase()
-
-  if (t) {
-    if (t.includes('text') || t.includes('char')) {
-      type = DATA_TYPE.STRING
-    } else if (t.includes('lob')) {
-      type = DATA_TYPE.BINARY
-    } else if (t.startsWith('tinyint') || t.includes('(1)')) {
-      type = DATA_TYPE.BOOLEAN
-    } else if (t.startsWith('int(')) {
-      type = DATA_TYPE.INT
-    } else if (t.startsWith('float')) {
-      type = DATA_TYPE.FLOAT
+  stats.forEach(stat => {
+    const name = stat.Field
+    const t = stat.Type.toLowerCase()
+    const notNull = stat.Null?.toUpperCase() !== 'YES'
+    if (notNull) {
+      s.required.push(name as any)
     }
-  }
 
-  return _filterFalsyValues({
-    name,
-    type,
-    notNull,
+    if (t.includes('text') || t.includes('char')) {
+      s.properties[name] = { type: 'string' } as JsonSchemaString
+    } else if (t.includes('lob')) {
+      s.properties[name] = { instanceof: 'Buffer' }
+    } else if (t.startsWith('tinyint') || t.includes('(1)')) {
+      s.properties[name] = { type: 'boolean' } as JsonSchemaBoolean
+    } else if (t.startsWith('int(')) {
+      s.properties[name] = { type: 'integer' } as JsonSchemaNumber
+    } else if (t.startsWith('float')) {
+      s.properties[name] = { type: 'number' } as JsonSchemaNumber
+    } else {
+      console.log(s)
+      throw new Error(`Unknown mysql field type ${name} ${stat.Type}`)
+    }
   })
+
+  return s
 }
 
 /**
  * Because MySQL doesn't support `.` in field names and escapes them as tableName + fieldName.
+ *
  * @param name
  */
 export function mapNameToMySQL(name: string): string {

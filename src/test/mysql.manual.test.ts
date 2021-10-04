@@ -1,4 +1,4 @@
-import { DATA_TYPE, DBQuery } from '@naturalcycles/db-lib'
+import { DBQuery } from '@naturalcycles/db-lib'
 import {
   createTestItemsDBM,
   getTestItemSchema,
@@ -33,7 +33,7 @@ const db = new MysqlDB({
 })
 
 beforeAll(async () => {
-  await db.createTable(getTestItemSchema(), { dropIfExists: true })
+  await db.createTable(TEST_TABLE, getTestItemSchema(), { dropIfExists: true })
 })
 
 afterAll(async () => {
@@ -63,13 +63,9 @@ test('fieldName with dot', async () => {
 
   const items = createTestItemsDBM(5).map(r => ({ ...r, [fieldName]: 'vv' }))
   const schema = getTestItemSchema()
-  schema.fields.push({
-    name: fieldName,
-    type: DATA_TYPE.STRING,
-  })
-  schema.table = table
+  schema.properties[fieldName] = { type: 'string' }
 
-  await db.createTable(schema, { dropIfExists: true })
+  await db.createTable(table, schema, { dropIfExists: true })
   await db.saveBatch(table, items)
   const { rows } = await db.runQuery(new DBQuery(table))
   // console.log(items2)
@@ -84,25 +80,21 @@ test('buffer', async () => {
   const items = createTestItemsDBM(5).map(r => ({ ...r, extra }))
 
   const schema = getTestItemSchema()
-  schema.fields.push({
-    name: 'extra',
-    type: DATA_TYPE.BINARY,
-  })
-  schema.table = table
+  schema.properties['extra'] = { instanceof: 'Buffer' }
 
-  await db.createTable(schema, { dropIfExists: true })
+  await db.createTable(table, schema, { dropIfExists: true })
   await db.saveBatch(table, items)
   const { rows } = await db.runQuery(new DBQuery(table))
   // console.log(items2)
-  console.log(await unzipToString(rows[0].extra))
+  console.log(await unzipToString(rows[0]!['extra']))
   expect(rows).toEqual(items)
 })
 
 test('stringify objects', async () => {
-  const [item] = createTestItemsDBM(1)
+  const item = createTestItemsDBM(1)[0]!
   item.k1 = { some: 'obj', c: 'd', e: 5 } as any
 
-  await db.createTable(getTestItemSchema(), { dropIfExists: true })
+  await db.createTable(TEST_TABLE, getTestItemSchema(), { dropIfExists: true })
   await db.saveBatch(TEST_TABLE, [item])
   const { rows } = await db.runQuery(new DBQuery(TEST_TABLE))
   // console.log(records)

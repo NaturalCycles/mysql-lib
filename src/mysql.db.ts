@@ -1,3 +1,5 @@
+import { Transform } from 'stream'
+import { promisify } from 'util'
 import {
   BaseCommonDB,
   BaseDBEntity,
@@ -5,24 +7,28 @@ import {
   CommonDBCreateOptions,
   CommonDBOptions,
   CommonDBSaveOptions,
-  CommonSchema,
   DBQuery,
   ObjectWithId,
   RunQueryResult,
 } from '@naturalcycles/db-lib'
-import { _filterUndefinedValues, _mapKeys, _mapValues, _Memo } from '@naturalcycles/js-lib'
+import {
+  _filterNullishValues,
+  _mapKeys,
+  _mapValues,
+  _Memo,
+  JsonSchemaObject,
+  JsonSchemaRootObject,
+} from '@naturalcycles/js-lib'
 import { Debug, ReadableTyped } from '@naturalcycles/nodejs-lib'
 import { white } from '@naturalcycles/nodejs-lib/dist/colors'
 import { Connection, Pool, PoolConfig, PoolConnection, QueryOptions, TypeCast } from 'mysql'
 import * as mysql from 'mysql'
-import { Transform } from 'stream'
-import { promisify } from 'util'
 import { dbQueryToSQLDelete, dbQueryToSQLSelect, insertSQL } from './query.util'
 import {
-  commonSchemaToMySQLDDL,
+  jsonSchemaToMySQLDDL,
   mapNameFromMySQL,
   MySQLTableStats,
-  mysqlTableStatsToCommonSchemaField,
+  mysqlTableStatsToJsonSchemaField,
 } from './schema/mysql.schema.util'
 
 export interface MysqlDBOptions extends CommonDBOptions {}
@@ -84,7 +90,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
 
   cfg!: MysqlDBCfg
 
-  async ping(): Promise<void> {
+  override async ping(): Promise<void> {
     const con = await this.getConnection()
     con.release()
   }
@@ -122,6 +128,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
 
   async close(): Promise<void> {
     const pool = this.pool()
+    // eslint-disable-next-line @typescript-eslint/await-thenable
     await promisify(pool.end.bind(pool))
   }
 
@@ -130,7 +137,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
    */
   async getConnection(): Promise<PoolConnection> {
     const pool = this.pool()
-    return promisify(pool.getConnection.bind(pool))()
+    return await promisify(pool.getConnection.bind(pool))()
   }
 
   /**
@@ -159,7 +166,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   }
 
   // GET
-  async getByIds<ROW extends ObjectWithId>(
+  override async getByIds<ROW extends ObjectWithId>(
     table: string,
     ids: string[],
     opt: MysqlDBOptions = {},
@@ -167,27 +174,25 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     if (!ids.length) return []
     const q = new DBQuery<ROW>(table).filterEq('id', ids)
     const { rows } = await this.runQuery(q, opt)
-    return rows.map(r => _mapKeys(r, (_v, k) => mapNameFromMySQL(k)) as any)
+    return rows.map(r => _mapKeys(r, k => mapNameFromMySQL(k)) as any)
   }
 
   // QUERY
-  async runQuery<ROW extends ObjectWithId, OUT = ROW>(
+  override async runQuery<ROW extends ObjectWithId, OUT = ROW>(
     q: DBQuery<ROW>,
-    opt: MysqlDBOptions = {},
+    _opt: MysqlDBOptions = {},
   ): Promise<RunQueryResult<OUT>> {
     const sql = dbQueryToSQLSelect(q)
     const rows = await this.runSQL<ROW[]>({ sql })
     return {
-      rows: rows.map(
-        r => _mapKeys(_filterUndefinedValues(r, true), (_v, k) => mapNameFromMySQL(k)) as any,
-      ),
+      rows: rows.map(r => _mapKeys(_filterNullishValues(r, true), k => mapNameFromMySQL(k)) as any),
     }
   }
 
   async runSQL<RESULT>(q: QueryOptions): Promise<RESULT> {
     if (this.cfg.logSQL) log(q.sql, q.values)
 
-    return new Promise(async (resolve, reject) => {
+    return await new Promise<RESULT>((resolve, reject) => {
       this.pool().query(q, (err, res) => {
         if (err) return reject(err)
         resolve(res)
@@ -195,17 +200,17 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     })
   }
 
-  async runQueryCount<ROW extends ObjectWithId>(
+  override async runQueryCount<ROW extends ObjectWithId>(
     q: DBQuery<ROW>,
-    opt?: CommonDBOptions,
+    _opt?: CommonDBOptions,
   ): Promise<number> {
     const { rows } = await this.runQuery(q.select(['count(*) as _count']))
     return (rows[0] as any)._count
   }
 
-  streamQuery<ROW extends ObjectWithId, OUT = ROW>(
+  override streamQuery<ROW extends ObjectWithId, OUT = ROW>(
     q: DBQuery<ROW>,
-    opt: MysqlDBOptions = {},
+    _opt: MysqlDBOptions = {},
   ): ReadableTyped<OUT> {
     const sql = dbQueryToSQLSelect(q)
 
@@ -219,17 +224,17 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
         new Transform({
           objectMode: true,
           transform(row, _encoding, cb) {
-            cb(null, _filterUndefinedValues(row, true))
+            cb(null, _filterNullishValues(row, true))
           },
         }),
       )
   }
 
   // SAVE
-  async saveBatch<ROW extends BaseDBEntity>(
+  override async saveBatch<ROW extends BaseDBEntity>(
     table: string,
     _rows: ROW[],
-    opt?: MysqlDBSaveOptions,
+    _opt?: MysqlDBSaveOptions,
   ): Promise<void> {
     if (!_rows.length) return
 
@@ -252,16 +257,16 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   /**
    * Limitation: always returns [], regardless of which rows are actually deleted
    */
-  async deleteByIds(table: string, ids: string[], opt?: MysqlDBOptions): Promise<number> {
+  override async deleteByIds(table: string, ids: string[], _opt?: MysqlDBOptions): Promise<number> {
     if (!ids.length) return 0
     const sql = dbQueryToSQLDelete(new DBQuery(table).filterEq('id', ids))
     const res = await this.runSQL<any>({ sql })
     return res.affectedRows
   }
 
-  async deleteByQuery<ROW extends ObjectWithId>(
+  override async deleteByQuery<ROW extends ObjectWithId>(
     q: DBQuery<ROW>,
-    opt?: CommonDBOptions,
+    _opt?: CommonDBOptions,
   ): Promise<number> {
     const sql = dbQueryToSQLDelete(q)
     const res = await this.runSQL<any>({ sql })
@@ -278,27 +283,30 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   /**
    * dropIfExists=true needed as a safety check
    */
-  async createTable(schema: CommonSchema, opt: CommonDBCreateOptions = {}): Promise<void> {
-    if (opt.dropIfExists) await this.dropTable(schema.table)
+  override async createTable(
+    table: string,
+    schema: JsonSchemaObject,
+    opt: CommonDBCreateOptions = {},
+  ): Promise<void> {
+    if (opt.dropIfExists) await this.dropTable(table)
 
-    const sql = commonSchemaToMySQLDDL(schema)
+    const sql = jsonSchemaToMySQLDDL(table, schema)
     await this.runSQL({ sql })
   }
 
-  async getTables(): Promise<string[]> {
-    return (await this.runSQL<object[]>({ sql: `show tables` }))
+  override async getTables(): Promise<string[]> {
+    return (await this.runSQL<Record<any, any>[]>({ sql: `show tables` }))
       .map(r => Object.values(r)[0])
       .filter(Boolean)
   }
 
-  async getTableSchema<ROW extends ObjectWithId>(table: string): Promise<CommonSchema<ROW>> {
-    const statsArray = await this.runSQL<MySQLTableStats[]>({
+  override async getTableSchema<ROW extends ObjectWithId>(
+    table: string,
+  ): Promise<JsonSchemaRootObject<ROW>> {
+    const stats = await this.runSQL<MySQLTableStats[]>({
       sql: `describe ${mysql.escapeId(table)}`,
     })
 
-    return {
-      table,
-      fields: statsArray.map(stats => mysqlTableStatsToCommonSchemaField(stats)),
-    }
+    return mysqlTableStatsToJsonSchemaField<ROW>(table, stats)
   }
 }

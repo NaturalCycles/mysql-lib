@@ -1,4 +1,5 @@
 import { DBQuery } from '@naturalcycles/db-lib'
+import { DBQueryFilterOperator } from '@naturalcycles/db-lib/src/query/dbQuery'
 import { _hb } from '@naturalcycles/js-lib'
 import { white, yellow } from '@naturalcycles/nodejs-lib/dist/colors'
 import { QueryOptions } from 'mysql'
@@ -8,7 +9,7 @@ import { mapNameToMySQL } from './schema/mysql.schema.util'
 const MAX_PACKET_SIZE = 1024 * 1024 // 1Mb
 const MAX_ROW_SIZE = 800 * 1024 // 1Mb - margin
 
-export function dbQueryToSQLSelect(q: DBQuery): string {
+export function dbQueryToSQLSelect(q: DBQuery<any>): string {
   const tokens = selectTokens(q)
 
   // filters
@@ -23,7 +24,7 @@ export function dbQueryToSQLSelect(q: DBQuery): string {
   return tokens.join(' ')
 }
 
-export function dbQueryToSQLDelete(q: DBQuery): string {
+export function dbQueryToSQLDelete(q: DBQuery<any>): string {
   const tokens = [`DELETE FROM`, mysql.escapeId(q.table)]
 
   // filters
@@ -40,12 +41,13 @@ export function dbQueryToSQLDelete(q: DBQuery): string {
  */
 export function insertSQL(
   table: string,
-  records: object[],
+  records: Record<any, any>[],
   verb: 'INSERT' | 'REPLACE' = 'INSERT',
 ): string[] {
   // INSERT INTO table_name (column1, column2, column3, ...)
   // VALUES (value1, value2, value3, ...);
 
+  // eslint-disable-next-line unicorn/no-array-reduce
   const fieldSet = records.reduce((set: Set<string>, rec) => {
     Object.keys(rec).forEach(field => set.add(field))
     return set
@@ -99,7 +101,7 @@ export function insertSQL(
   // todo: handle "upsert" later
 }
 
-export function insertSQLSingle(table: string, record: object): string {
+export function insertSQLSingle(table: string, record: Record<any, any>): string {
   // INSERT INTO table_name (column1, column2, column3, ...)
   // VALUES (value1, value2, value3, ...);
 
@@ -122,14 +124,14 @@ export function insertSQLSingle(table: string, record: object): string {
   return tokens.join(' ')
 }
 
-export function insertSQLSetSingle(table: string, record: object): QueryOptions {
+export function insertSQLSetSingle(table: string, record: Record<any, any>): QueryOptions {
   return {
     sql: `INSERT INTO ${mysql.escapeId(table)} SET ?`,
     values: [record],
   }
 }
 
-export function dbQueryToSQLUpdate(q: DBQuery, record: object): string {
+export function dbQueryToSQLUpdate(q: DBQuery<any>, record: Record<any, any>): string {
   // var sql = mysql.format('UPDATE posts SET modified = ? WHERE id = ?', [CURRENT_TIMESTAMP, 42]);
   const tokens = [
     `UPDATE`,
@@ -144,7 +146,7 @@ export function dbQueryToSQLUpdate(q: DBQuery, record: object): string {
   return mysql.format(tokens.join(' '), Object.values(record))
 }
 
-function selectTokens(q: DBQuery): string[] {
+function selectTokens(q: DBQuery<any>): string[] {
   let fields = ['*']
 
   if (q._selectedFieldNames) {
@@ -155,7 +157,7 @@ function selectTokens(q: DBQuery): string[] {
   return [`SELECT`, fields.map(f => mapNameToMySQL(f)).join(', '), `FROM`, mysql.escapeId(q.table)]
 }
 
-function offsetLimitTokens(q: DBQuery): string[] {
+function offsetLimitTokens(q: DBQuery<any>): string[] {
   const tokens: string[] = []
 
   if (q._limitValue) {
@@ -170,7 +172,7 @@ function offsetLimitTokens(q: DBQuery): string[] {
   return tokens
 }
 
-function orderTokens(q: DBQuery): string[] {
+function orderTokens(q: DBQuery<any>): string[] {
   if (!q._orders.length) return []
   return [
     `ORDER BY`,
@@ -178,7 +180,11 @@ function orderTokens(q: DBQuery): string[] {
   ]
 }
 
-function whereTokens(q: DBQuery): string[] {
+const OP_MAP: Partial<Record<DBQueryFilterOperator, string>> = {
+  '==': '=',
+}
+
+function whereTokens(q: DBQuery<any>): string[] {
   if (!q._filters.length) return []
 
   return [
@@ -190,7 +196,7 @@ function whereTokens(q: DBQuery): string[] {
 
           return [
             mysql.escapeId(mapNameToMySQL(f.name)),
-            f.op === '=' ? 'IS NULL' : 'IS NOT NULL',
+            f.op === '==' ? 'IS NULL' : 'IS NOT NULL',
           ].join(' ')
         }
 
@@ -199,7 +205,11 @@ function whereTokens(q: DBQuery): string[] {
           return `${mysql.escapeId(mapNameToMySQL(f.name))} IN (${mysql.escape(f.val)})`
         }
 
-        return [mysql.escapeId(mapNameToMySQL(f.name)), f.op, mysql.escape(f.val)].join(' ')
+        return [
+          mysql.escapeId(mapNameToMySQL(f.name)),
+          OP_MAP[f.op] || f.op,
+          mysql.escape(f.val),
+        ].join(' ')
       })
       .join(' AND '),
   ]

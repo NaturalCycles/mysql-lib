@@ -4,7 +4,6 @@ import {
   createTestItemsDBM,
   TEST_TABLE,
 } from '@naturalcycles/db-lib/dist/testing'
-import { _range } from '@naturalcycles/js-lib'
 import { dbQueryToSQLDelete, dbQueryToSQLSelect, dbQueryToSQLUpdate, insertSQL } from './query.util'
 
 test('dbQueryToSQLSelect', () => {
@@ -28,13 +27,13 @@ test('dbQueryToSQLSelect', () => {
 
   // NULL cases
   sql = dbQueryToSQLSelect(
-    new DBQuery('TBL1').filter('a', '=', undefined).filter('a2', '=', null).filter('a3', '>', null),
+    new DBQuery('TBL1').filterEq('a', undefined).filterEq('a2', null).filter('a3', '>', null),
   )
   // console.log(sql)
   expect(sql).toMatchSnapshot()
 
   // ARRAY CASES
-  sql = dbQueryToSQLSelect(new DBQuery('TBL1').filter('a', '=', ['a1', 'a2', 'a3']))
+  sql = dbQueryToSQLSelect(new DBQuery('TBL1').filterEq('a', ['a1', 'a2', 'a3']))
   // console.log(sql)
   expect(sql).toMatchSnapshot()
 })
