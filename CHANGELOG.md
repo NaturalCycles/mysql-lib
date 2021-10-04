@@ -1,3 +1,10 @@
+# [3.8.0](https://github.com/NaturalCycles/mysql-lib/compare/v3.7.1...v3.8.0) (2021-10-04)
+
+
+### Features
+
+* modernize ([6e8f0a2](https://github.com/NaturalCycles/mysql-lib/commit/6e8f0a254a67902cbc185f034f58cd4f6885449d))
+
 ## [3.7.1](https://github.com/NaturalCycles/mysql-lib/compare/v3.7.0...v3.7.1) (2020-06-03)
 
 
