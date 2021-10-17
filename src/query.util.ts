@@ -146,11 +146,11 @@ export function dbQueryToSQLUpdate(q: DBQuery<any>, record: Record<any, any>): s
   return mysql.format(tokens.join(' '), Object.values(record))
 }
 
-function selectTokens(q: DBQuery<any>): string[] {
+function selectTokens(q: DBQuery): string[] {
   let fields = ['*']
 
   if (q._selectedFieldNames) {
-    fields = q._selectedFieldNames.length ? q._selectedFieldNames : ['id']
+    fields = q._selectedFieldNames.length ? (q._selectedFieldNames as string[]) : ['id']
   }
 
   // We don't do `escapeId` cause it'll ruin e.g SELECT `count *` FROM ...
@@ -172,7 +172,7 @@ function offsetLimitTokens(q: DBQuery<any>): string[] {
   return tokens
 }
 
-function orderTokens(q: DBQuery<any>): string[] {
+function orderTokens(q: DBQuery): string[] {
   if (!q._orders.length) return []
   return [
     `ORDER BY`,
@@ -184,7 +184,7 @@ const OP_MAP: Partial<Record<DBQueryFilterOperator, string>> = {
   '==': '=',
 }
 
-function whereTokens(q: DBQuery<any>): string[] {
+function whereTokens(q: DBQuery): string[] {
   if (!q._filters.length) return []
 
   return [
@@ -195,18 +195,18 @@ function whereTokens(q: DBQuery<any>): string[] {
           // special treatment
 
           return [
-            mysql.escapeId(mapNameToMySQL(f.name)),
+            mysql.escapeId(mapNameToMySQL(f.name as string)),
             f.op === '==' ? 'IS NULL' : 'IS NOT NULL',
           ].join(' ')
         }
 
         if (Array.isArray(f.val)) {
           // special case for arrays
-          return `${mysql.escapeId(mapNameToMySQL(f.name))} IN (${mysql.escape(f.val)})`
+          return `${mysql.escapeId(mapNameToMySQL(f.name as string))} IN (${mysql.escape(f.val)})`
         }
 
         return [
-          mysql.escapeId(mapNameToMySQL(f.name)),
+          mysql.escapeId(mapNameToMySQL(f.name as string)),
           OP_MAP[f.op] || f.op,
           mysql.escape(f.val),
         ].join(' ')

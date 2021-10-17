@@ -1,8 +1,8 @@
 import { Transform } from 'stream'
 import { promisify } from 'util'
+import { AnyObjectWithId } from '@naturalcycles/db-lib/src/db.model'
 import {
   BaseCommonDB,
-  BaseDBEntity,
   CommonDB,
   CommonDBCreateOptions,
   CommonDBOptions,
@@ -32,7 +32,8 @@ import {
 } from './schema/mysql.schema.util'
 
 export interface MysqlDBOptions extends CommonDBOptions {}
-export interface MysqlDBSaveOptions extends CommonDBSaveOptions {}
+export interface MysqlDBSaveOptions<ROW extends ObjectWithId = AnyObjectWithId>
+  extends CommonDBSaveOptions<ROW> {}
 
 /**
  * @default false / undefined
@@ -204,7 +205,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     q: DBQuery<ROW>,
     _opt?: CommonDBOptions,
   ): Promise<number> {
-    const { rows } = await this.runQuery(q.select(['count(*) as _count']))
+    const { rows } = await this.runQuery(q.select(['count(*) as _count' as any]))
     return (rows[0] as any)._count
   }
 
@@ -231,10 +232,10 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   }
 
   // SAVE
-  override async saveBatch<ROW extends BaseDBEntity>(
+  override async saveBatch<ROW extends ObjectWithId>(
     table: string,
     _rows: ROW[],
-    _opt?: MysqlDBSaveOptions,
+    _opt?: MysqlDBSaveOptions<ROW>,
   ): Promise<void> {
     if (!_rows.length) return
 
@@ -283,9 +284,9 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   /**
    * dropIfExists=true needed as a safety check
    */
-  override async createTable(
+  override async createTable<ROW extends ObjectWithId>(
     table: string,
-    schema: JsonSchemaObject,
+    schema: JsonSchemaObject<ROW>,
     opt: CommonDBCreateOptions = {},
   ): Promise<void> {
     if (opt.dropIfExists) await this.dropTable(table)
