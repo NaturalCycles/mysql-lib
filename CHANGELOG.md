@@ -1,3 +1,10 @@
+## [3.8.1](https://github.com/NaturalCycles/mysql-lib/compare/v3.8.0...v3.8.1) (2021-10-17)
+
+
+### Bug Fixes
+
+* adapt to latest db-lib ([9a368ef](https://github.com/NaturalCycles/mysql-lib/commit/9a368ef4b9d964c09520660319059e9cb67bcf76))
+
 # [3.8.0](https://github.com/NaturalCycles/mysql-lib/compare/v3.7.1...v3.8.0) (2021-10-04)
 
 
