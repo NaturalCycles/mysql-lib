@@ -3,9 +3,6 @@
   "scripts": {
     "prepare": "husky install"
   },
-  "peerDependencies": {
-    "@naturalcycles/db-lib": ">=7.0.0"
-  },
   "dependencies": {
     "@naturalcycles/db-lib": "^8.16.2",
     "@naturalcycles/js-lib": "^14.47.0",

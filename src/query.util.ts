@@ -1,6 +1,6 @@
 import { DBQuery } from '@naturalcycles/db-lib'
 import { DBQueryFilterOperator } from '@naturalcycles/db-lib/src/query/dbQuery'
-import { _hb } from '@naturalcycles/js-lib'
+import { _hb, CommonLogger } from '@naturalcycles/js-lib'
 import { white, yellow } from '@naturalcycles/nodejs-lib/dist/colors'
 import { QueryOptions } from 'mysql'
 import * as mysql from 'mysql'
@@ -43,6 +43,7 @@ export function insertSQL(
   table: string,
   records: Record<any, any>[],
   verb: 'INSERT' | 'REPLACE' = 'INSERT',
+  logger: CommonLogger = console,
 ): string[] {
   // INSERT INTO table_name (column1, column2, column3, ...)
   // VALUES (value1, value2, value3, ...);
@@ -90,7 +91,7 @@ export function insertSQL(
     sqls.push(sql) // last one
   }
 
-  console.log(
+  logger.log(
     `${white(table)} large sql query (${yellow(_hb(full.length))}) was split into ${yellow(
       sqls.length,
     )} chunks`,

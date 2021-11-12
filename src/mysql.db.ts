@@ -1,6 +1,5 @@
 import { Transform } from 'stream'
 import { promisify } from 'util'
-import { AnyObjectWithId } from '@naturalcycles/db-lib/src/db.model'
 import {
   BaseCommonDB,
   CommonDB,
@@ -8,7 +7,6 @@ import {
   CommonDBOptions,
   CommonDBSaveOptions,
   DBQuery,
-  ObjectWithId,
   RunQueryResult,
 } from '@naturalcycles/db-lib'
 import {
@@ -16,10 +14,14 @@ import {
   _mapKeys,
   _mapValues,
   _Memo,
+  AnyObjectWithId,
+  CommonLogger,
+  commonLoggerPrefix,
   JsonSchemaObject,
   JsonSchemaRootObject,
+  ObjectWithId,
 } from '@naturalcycles/js-lib'
-import { Debug, ReadableTyped } from '@naturalcycles/nodejs-lib'
+import { ReadableTyped } from '@naturalcycles/nodejs-lib'
 import { white } from '@naturalcycles/nodejs-lib/dist/colors'
 import { Connection, Pool, PoolConfig, PoolConnection, QueryOptions, TypeCast } from 'mysql'
 import * as mysql from 'mysql'
@@ -48,9 +50,12 @@ export interface MysqlDBCfg extends PoolConfig {
    * If true - will emit logs of connection events.
    */
   debugConnections?: boolean
-}
 
-const log = Debug('nc:mysql-lib')
+  /**
+   * Default to `console`
+   */
+  logger?: CommonLogger
+}
 
 const BOOLEAN_TYPES = new Set(['TINY', 'TINYINT', 'INT'])
 const BOOLEAN_BIT_TYPES = new Set(['BIT'])
@@ -86,10 +91,11 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
       // password: MYSQL_PW,
       // database: MYSQL_DB,
       ...cfg,
+      logger: commonLoggerPrefix(cfg.logger || console, '[mysql]'),
     }
   }
 
-  cfg!: MysqlDBCfg
+  cfg: MysqlDBCfg & { logger: CommonLogger }
 
   override async ping(): Promise<void> {
     const con = await this.getConnection()
@@ -99,29 +105,29 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   @_Memo()
   pool(): Pool {
     const pool = mysql.createPool(this.cfg)
-    const { host, database } = this.cfg
-    log(`connected to ${white(host + '/' + database)}`)
+    const { host, database, logger } = this.cfg
+    logger.log(`connected to ${white(host + '/' + database)}`)
 
     if (this.cfg.debugConnections) {
       pool.on('acquire', con => {
-        log(`acquire(${con.threadId})`)
+        logger.log(`acquire(${con.threadId})`)
       })
 
       pool.on('connection', con => {
-        log(`connection(${con.threadId})`)
+        logger.log(`connection(${con.threadId})`)
       })
 
       pool.on('enqueue', () => {
-        log(`enqueue`)
+        logger.log(`enqueue`)
       })
 
       pool.on('release', con => {
-        log(`release(${con.threadId})`)
+        logger.log(`release(${con.threadId})`)
       })
     }
 
     pool.on('error', err => {
-      log.error(`error`, err)
+      logger.error(err)
     })
 
     return pool
@@ -131,6 +137,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     const pool = this.pool()
     // eslint-disable-next-line @typescript-eslint/await-thenable
     await promisify(pool.end.bind(pool))
+    this.cfg.logger.log('closed')
   }
 
   /**
@@ -151,16 +158,16 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     const { threadId } = con
 
     if (this.cfg.debugConnections) {
-      log(`createSingleConnection(${threadId})`)
+      this.cfg.logger.log(`createSingleConnection(${threadId})`)
 
-      con.on('connect', () => log(`createSingleConnection(${threadId}).connect`))
-      con.on('drain', () => log(`createSingleConnection(${threadId}).drain`))
-      con.on('enqueue', () => log(`createSingleConnection(${threadId}).enqueue`))
-      con.on('end', () => log(`createSingleConnection(${threadId}).end`))
+      con.on('connect', () => this.cfg.logger.log(`createSingleConnection(${threadId}).connect`))
+      con.on('drain', () => this.cfg.logger.log(`createSingleConnection(${threadId}).drain`))
+      con.on('enqueue', () => this.cfg.logger.log(`createSingleConnection(${threadId}).enqueue`))
+      con.on('end', () => this.cfg.logger.log(`createSingleConnection(${threadId}).end`))
     }
 
     con.on('error', err => {
-      log.error(`createSingleConnection(${threadId}).error`, err)
+      this.cfg.logger.error(`createSingleConnection(${threadId}).error`, err)
     })
 
     return con
@@ -191,7 +198,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   }
 
   async runSQL<RESULT>(q: QueryOptions): Promise<RESULT> {
-    if (this.cfg.logSQL) log(q.sql, q.values)
+    if (this.cfg.logSQL) this.cfg.logger.log(q.sql, q.values)
 
     return await new Promise<RESULT>((resolve, reject) => {
       this.pool().query(q, (err, res) => {
@@ -215,7 +222,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   ): ReadableTyped<OUT> {
     const sql = dbQueryToSQLSelect(q)
 
-    if (this.cfg.logSQL) log(`stream: ${sql}`)
+    if (this.cfg.logSQL) this.cfg.logger.log(`stream: ${sql}`)
 
     // return this.streamSQL(sql, opt)
     return this.pool()
@@ -247,7 +254,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     )
 
     // inserts are split into multiple sentenses to respect the max_packet_size (1Mb usually)
-    const sqls = insertSQL(table, rows)
+    const sqls = insertSQL(table, rows, 'INSERT', this.cfg.logger)
 
     for await (const sql of sqls) {
       await this.runSQL({ sql })
@@ -308,6 +315,6 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
       sql: `describe ${mysql.escapeId(table)}`,
     })
 
-    return mysqlTableStatsToJsonSchemaField<ROW>(table, stats)
+    return mysqlTableStatsToJsonSchemaField<ROW>(table, stats, this.cfg.logger)
   }
 }

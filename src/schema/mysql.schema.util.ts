@@ -1,4 +1,5 @@
 import {
+  CommonLogger,
   JsonSchemaBoolean,
   JsonSchemaNumber,
   JsonSchemaObject,
@@ -81,6 +82,7 @@ export function jsonSchemaToMySQLDDL(
 export function mysqlTableStatsToJsonSchemaField<T = any>(
   table: string,
   stats: MySQLTableStats[],
+  logger: CommonLogger,
 ): JsonSchemaRootObject<T> {
   const s: JsonSchemaRootObject<T> = {
     $id: `${table}.schema.json`,
@@ -109,7 +111,7 @@ export function mysqlTableStatsToJsonSchemaField<T = any>(
     } else if (t.startsWith('float')) {
       s.properties[name] = { type: 'number' } as JsonSchemaNumber
     } else {
-      console.log(s)
+      logger.log(s)
       throw new Error(`Unknown mysql field type ${name} ${stat.Type}`)
     }
   })
