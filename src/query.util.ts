@@ -41,7 +41,7 @@ export function dbQueryToSQLDelete(q: DBQuery<any>): string {
  */
 export function insertSQL(
   table: string,
-  records: Record<any, any>[],
+  rows: Record<any, any>[],
   verb: 'INSERT' | 'REPLACE' = 'INSERT',
   logger: CommonLogger = console,
 ): string[] {
@@ -49,8 +49,8 @@ export function insertSQL(
   // VALUES (value1, value2, value3, ...);
 
   // eslint-disable-next-line unicorn/no-array-reduce
-  const fieldSet = records.reduce((set: Set<string>, rec) => {
-    Object.keys(rec).forEach(field => set.add(field))
+  const fieldSet = rows.reduce((set: Set<string>, row) => {
+    Object.keys(row).forEach(field => set.add(field))
     return set
   }, new Set<string>())
   const fields = [...fieldSet]
@@ -63,7 +63,7 @@ export function insertSQL(
     `VALUES\n`,
   ].join(' ')
 
-  const valueRows = records.map(rec => {
+  const valueRows = rows.map(rec => {
     return `(` + fields.map(k => mysql.escape(rec[k])).join(',') + `)`
   })
 

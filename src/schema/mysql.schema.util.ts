@@ -106,7 +106,7 @@ export function mysqlTableStatsToJsonSchemaField<T = any>(
       s.properties[name] = { instanceof: 'Buffer' }
     } else if (t.startsWith('tinyint') || t.includes('(1)')) {
       s.properties[name] = { type: 'boolean' } as JsonSchemaBoolean
-    } else if (t.startsWith('int(')) {
+    } else if (t === 'int' || t.startsWith('int(')) {
       s.properties[name] = { type: 'integer' } as JsonSchemaNumber
     } else if (t.startsWith('float')) {
       s.properties[name] = { type: 'number' } as JsonSchemaNumber

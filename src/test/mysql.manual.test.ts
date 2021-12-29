@@ -1,10 +1,12 @@
 import { DBQuery } from '@naturalcycles/db-lib'
 import {
+  createTestItemDBM,
   createTestItemsDBM,
   getTestItemSchema,
   runCommonDaoTest,
   runCommonDBTest,
   TEST_TABLE,
+  TestItemDBM,
 } from '@naturalcycles/db-lib/dist/testing'
 import { deflateString, inflateToString, requireEnvKeys } from '@naturalcycles/nodejs-lib'
 import { MysqlDB } from '../mysql.db'
@@ -49,6 +51,24 @@ test('getTableSchema', async () => {
   const schema = await db.getTableSchema(TEST_TABLE)
   console.log(schema)
   expect(getTestItemSchema()).toMatchObject(schema)
+})
+
+test('saveBatch overwrite', async () => {
+  const items = createTestItemsDBM(1)
+  // should not throw
+  await db.saveBatch(TEST_TABLE, items)
+  await db.saveBatch(TEST_TABLE, items)
+})
+
+test('null values', async () => {
+  const item3 = {
+    ...createTestItemDBM(3),
+    k2: null,
+  }
+  await db.saveBatch(TEST_TABLE, [item3])
+  const item3Loaded = (await db.getByIds<TestItemDBM>(TEST_TABLE, [item3.id]))[0]!
+  console.log(item3Loaded)
+  // expect(item3Loaded.k2).toBe(null)
 })
 
 test('emojis', async () => {
@@ -97,7 +117,7 @@ test('stringify objects', async () => {
   await db.createTable(TEST_TABLE, getTestItemSchema(), { dropIfExists: true })
   await db.saveBatch(TEST_TABLE, [item])
   const { rows } = await db.runQuery(new DBQuery(TEST_TABLE))
-  // console.log(records)
+  // console.log(rows)
   expect(rows).toEqual([
     {
       ...item,

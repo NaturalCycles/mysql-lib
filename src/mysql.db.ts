@@ -10,7 +10,7 @@ import {
   RunQueryResult,
 } from '@naturalcycles/db-lib'
 import {
-  _filterNullishValues,
+  _filterUndefinedValues,
   _mapKeys,
   _mapValues,
   _Memo,
@@ -136,7 +136,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   async close(): Promise<void> {
     const pool = this.pool()
     // eslint-disable-next-line @typescript-eslint/await-thenable
-    await promisify(pool.end.bind(pool))
+    await promisify(pool.end.bind(pool))()
     this.cfg.logger.log('closed')
   }
 
@@ -191,14 +191,24 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     _opt: MysqlDBOptions = {},
   ): Promise<RunQueryResult<OUT>> {
     const sql = dbQueryToSQLSelect(q)
-    const rows = await this.runSQL<ROW[]>({ sql })
+    const rows = (await this.runSQL<ROW[]>({ sql })).map(
+      row => _mapKeys(_filterUndefinedValues(row, true), k => mapNameFromMySQL(k)) as any,
+    )
+
+    // edge case where 0 fields are selected
+    if (q._selectedFieldNames?.length === 0) {
+      return {
+        rows: rows.map(_ => ({} as any)),
+      }
+    }
+
     return {
-      rows: rows.map(r => _mapKeys(_filterNullishValues(r, true), k => mapNameFromMySQL(k)) as any),
+      rows,
     }
   }
 
   async runSQL<RESULT>(q: QueryOptions): Promise<RESULT> {
-    if (this.cfg.logSQL) this.cfg.logger.log(q.sql, q.values)
+    if (this.cfg.logSQL) this.cfg.logger.log(...[q.sql, q.values].filter(Boolean))
 
     return await new Promise<RESULT>((resolve, reject) => {
       this.pool().query(q, (err, res) => {
@@ -232,7 +242,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
         new Transform({
           objectMode: true,
           transform(row, _encoding, cb) {
-            cb(null, _filterNullishValues(row, true))
+            cb(null, _filterUndefinedValues(row, true))
           },
         }),
       )
@@ -248,13 +258,13 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
 
     // Stringify object values
     const rows = _rows.map(row =>
-      _mapValues(row, v => {
+      _mapValues(row, (_k, v) => {
         return v && typeof v === 'object' && !Buffer.isBuffer(v) ? JSON.stringify(v) : v
       }),
     )
 
     // inserts are split into multiple sentenses to respect the max_packet_size (1Mb usually)
-    const sqls = insertSQL(table, rows, 'INSERT', this.cfg.logger)
+    const sqls = insertSQL(table, rows, 'REPLACE', this.cfg.logger)
 
     for await (const sql of sqls) {
       await this.runSQL({ sql })
