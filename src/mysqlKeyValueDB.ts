@@ -3,7 +3,7 @@ import { CommonDBCreateOptions, CommonKeyValueDB, KeyValueDBTuple } from '@natur
 import { pMap } from '@naturalcycles/js-lib'
 import { ReadableTyped } from '@naturalcycles/nodejs-lib'
 import { QueryOptions } from 'mysql'
-import { MysqlDB, MysqlDBCfg, typeCast } from './mysql.db'
+import { MysqlDB, MysqlDBCfg } from './mysql.db'
 
 interface KeyValueObject {
   id: string
@@ -11,16 +11,9 @@ interface KeyValueObject {
 }
 
 export class MySQLKeyValueDB implements CommonKeyValueDB {
-  constructor(cfg: MysqlDBCfg = {}) {
-    this.cfg = {
-      typeCast,
-      ...cfg,
-    }
-
+  constructor(public cfg: MysqlDBCfg) {
     this.db = new MysqlDB(this.cfg)
   }
-
-  cfg: MysqlDBCfg
 
   db: MysqlDB
 
