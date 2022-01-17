@@ -218,6 +218,21 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     })
   }
 
+  /**
+   * Allows to run semicolon-separated "SQL file".
+   * E.g "ddl reset script".
+   */
+  async runSQLString(s: string): Promise<void> {
+    const queries = s
+      .split(';')
+      .map(s => s.trim())
+      .filter(Boolean)
+
+    for await (const sql of queries) {
+      await this.runSQL({ sql })
+    }
+  }
+
   override async runQueryCount<ROW extends ObjectWithId>(
     q: DBQuery<ROW>,
     _opt?: CommonDBOptions,
