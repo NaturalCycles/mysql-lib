@@ -16,7 +16,7 @@ export function dbQueryToSQLSelect(q: DBQuery<any>): string {
   tokens.push(...whereTokens(q))
 
   // order
-  tokens.push(...orderTokens(q))
+  tokens.push(...groupOrderTokens(q))
 
   // offset/limit
   tokens.push(...offsetLimitTokens(q))
@@ -155,7 +155,13 @@ function selectTokens(q: DBQuery): string[] {
   }
 
   // We don't do `escapeId` cause it'll ruin e.g SELECT `count *` FROM ...
-  return [`SELECT`, fields.map(f => mapNameToMySQL(f)).join(', '), `FROM`, mysql.escapeId(q.table)]
+  return [
+    `SELECT`,
+    q._distinct && ('DISTINCT' as any),
+    fields.map(f => mapNameToMySQL(f)).join(', '),
+    `FROM`,
+    mysql.escapeId(q.table),
+  ].filter(Boolean)
 }
 
 function offsetLimitTokens(q: DBQuery<any>): string[] {
@@ -173,12 +179,21 @@ function offsetLimitTokens(q: DBQuery<any>): string[] {
   return tokens
 }
 
-function orderTokens(q: DBQuery): string[] {
-  if (!q._orders.length) return []
-  return [
-    `ORDER BY`,
-    q._orders.map(o => `\`${o.name}\` ${o.descending ? 'DESC' : 'ASC'}`).join(', '),
-  ]
+function groupOrderTokens(q: DBQuery): string[] {
+  const t: string[] = []
+
+  if (q._groupByFieldNames?.length) {
+    t.push(`GROUP BY`, q._groupByFieldNames.map(c => `\`${c}\``).join(', '))
+  }
+
+  if (q._orders.length) {
+    t.push(
+      `ORDER BY`,
+      q._orders.map(o => `\`${o.name}\` ${o.descending ? 'DESC' : 'ASC'}`).join(', '),
+    )
+  }
+
+  return t
 }
 
 const OP_MAP: Partial<Record<DBQueryFilterOperator, string>> = {
