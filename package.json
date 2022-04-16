@@ -13,7 +13,7 @@
   "devDependencies": {
     "@naturalcycles/dev-lib": "^12.7.5",
     "@types/node": "^17.0.5",
-    "dotenv": "^14.1.0",
+    "dotenv": "^16.0.0",
     "jest": "^27.2.4"
   },
   "files": [
