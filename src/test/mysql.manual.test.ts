@@ -2,11 +2,11 @@ import { DBQuery } from '@naturalcycles/db-lib'
 import {
   createTestItemDBM,
   createTestItemsDBM,
-  getTestItemSchema,
   runCommonDaoTest,
   runCommonDBTest,
   TEST_TABLE,
   TestItemDBM,
+  testItemDBMJsonSchema,
 } from '@naturalcycles/db-lib/dist/testing'
 import { deflateString, inflateToString, requireEnvKeys } from '@naturalcycles/nodejs-lib'
 import { MysqlDB } from '../mysql.db'
@@ -35,22 +35,36 @@ const db = new MysqlDB({
 })
 
 beforeAll(async () => {
-  await db.createTable(TEST_TABLE, getTestItemSchema(), { dropIfExists: true })
+  await db.createTable(TEST_TABLE, testItemDBMJsonSchema.build(), { dropIfExists: true })
 })
 
 afterAll(async () => {
   await db.close()
 })
 
-describe('runCommonDBTest', () => runCommonDBTest(db))
+describe('runCommonDBTest', () =>
+  runCommonDBTest(
+    db,
+    {
+      update: false,
+    },
+    { allowExtraPropertiesInResponse: true },
+  ))
 
-describe('runCommonDaoTest', () => runCommonDaoTest(db))
+describe('runCommonDaoTest', () =>
+  runCommonDaoTest(
+    db,
+    {
+      update: false,
+    },
+    { allowExtraPropertiesInResponse: false },
+  ))
 
 test('getTableSchema', async () => {
   // console.log(await db.getTables())
   const schema = await db.getTableSchema(TEST_TABLE)
   console.log(schema)
-  expect(getTestItemSchema()).toMatchObject(schema)
+  expect(testItemDBMJsonSchema.build()).toMatchObject(schema)
 })
 
 test('saveBatch overwrite', async () => {
@@ -82,7 +96,7 @@ test('fieldName with dot', async () => {
   const table = TEST_TABLE + '2'
 
   const items = createTestItemsDBM(5).map(r => ({ ...r, [fieldName]: 'vv' }))
-  const schema = getTestItemSchema()
+  const schema = testItemDBMJsonSchema.build()
   schema.properties[fieldName] = { type: 'string' }
 
   await db.createTable(table, schema, { dropIfExists: true })
@@ -99,7 +113,7 @@ test('buffer', async () => {
 
   const items = createTestItemsDBM(5).map(r => ({ ...r, extra }))
 
-  const schema = getTestItemSchema()
+  const schema = testItemDBMJsonSchema.build()
   schema.properties['extra'] = { instanceof: 'Buffer' }
 
   await db.createTable(table, schema, { dropIfExists: true })
@@ -114,7 +128,7 @@ test('stringify objects', async () => {
   const item = createTestItemsDBM(1)[0]!
   item.k1 = { some: 'obj', c: 'd', e: 5 } as any
 
-  await db.createTable(TEST_TABLE, getTestItemSchema(), { dropIfExists: true })
+  await db.createTable(TEST_TABLE, testItemDBMJsonSchema.build(), { dropIfExists: true })
   await db.saveBatch(TEST_TABLE, [item])
   const { rows } = await db.runQuery(new DBQuery(TEST_TABLE))
   // console.log(rows)

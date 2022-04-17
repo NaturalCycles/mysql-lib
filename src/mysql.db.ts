@@ -34,7 +34,7 @@ import {
 } from './schema/mysql.schema.util'
 
 export interface MysqlDBOptions extends CommonDBOptions {}
-export interface MysqlDBSaveOptions<ROW extends ObjectWithId = AnyObjectWithId>
+export interface MysqlDBSaveOptions<ROW extends Partial<ObjectWithId> = AnyObjectWithId>
   extends CommonDBSaveOptions<ROW> {}
 
 /**
@@ -264,10 +264,10 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   }
 
   // SAVE
-  override async saveBatch<ROW extends ObjectWithId>(
+  override async saveBatch<ROW extends Partial<ObjectWithId>>(
     table: string,
     _rows: ROW[],
-    _opt?: MysqlDBSaveOptions<ROW>,
+    opt: MysqlDBSaveOptions<ROW> = {},
   ): Promise<void> {
     if (!_rows.length) return
 
@@ -279,7 +279,12 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     )
 
     // inserts are split into multiple sentenses to respect the max_packet_size (1Mb usually)
-    const sqls = insertSQL(table, rows, 'REPLACE', this.cfg.logger)
+    const sqls = insertSQL(
+      table,
+      rows,
+      opt.saveMethod === 'insert' ? 'INSERT' : 'REPLACE',
+      this.cfg.logger,
+    )
 
     for await (const sql of sqls) {
       await this.runSQL({ sql })
