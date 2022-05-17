@@ -23,7 +23,15 @@ import {
 } from '@naturalcycles/js-lib'
 import { ReadableTyped } from '@naturalcycles/nodejs-lib'
 import { white } from '@naturalcycles/nodejs-lib/dist/colors'
-import { Connection, Pool, PoolConfig, PoolConnection, QueryOptions, TypeCast } from 'mysql'
+import {
+  Connection,
+  OkPacket,
+  Pool,
+  PoolConfig,
+  PoolConnection,
+  QueryOptions,
+  TypeCast,
+} from 'mysql'
 import * as mysql from 'mysql'
 import { dbQueryToSQLDelete, dbQueryToSQLSelect, insertSQL } from './query.util'
 import {
@@ -266,25 +274,38 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   // SAVE
   override async saveBatch<ROW extends Partial<ObjectWithId>>(
     table: string,
-    _rows: ROW[],
+    rowsInput: ROW[],
     opt: MysqlDBSaveOptions<ROW> = {},
   ): Promise<void> {
-    if (!_rows.length) return
+    if (!rowsInput.length) return
 
     // Stringify object values
-    const rows = _rows.map(row =>
+    const rows = rowsInput.map(row =>
       _mapValues(row, (_k, v) => {
         return v && typeof v === 'object' && !Buffer.isBuffer(v) ? JSON.stringify(v) : v
       }),
     )
 
+    const verb = opt.saveMethod === 'insert' ? 'INSERT' : 'REPLACE'
+
+    if (opt.assignGeneratedIds) {
+      // Insert rows one-by-one, to get their auto-generated id
+
+      let i = -1
+      for await (const row of rows) {
+        i++
+        const sql = insertSQL(table, [row], verb, this.cfg.logger)[0]!
+        const { insertId } = await this.runSQL<OkPacket>({ sql })
+
+        // Mutate the input row with insertIt
+        rowsInput[i]!.id = insertId
+      }
+
+      return
+    }
+
     // inserts are split into multiple sentenses to respect the max_packet_size (1Mb usually)
-    const sqls = insertSQL(
-      table,
-      rows,
-      opt.saveMethod === 'insert' ? 'INSERT' : 'REPLACE',
-      this.cfg.logger,
-    )
+    const sqls = insertSQL(table, rows, verb, this.cfg.logger)
 
     for await (const sql of sqls) {
       await this.runSQL({ sql })
