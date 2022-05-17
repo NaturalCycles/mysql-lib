@@ -323,8 +323,8 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   ): Promise<number> {
     if (!ids.length) return 0
     const sql = dbQueryToSQLDelete(new DBQuery(table).filterEq('id', ids))
-    const res = await this.runSQL<any>({ sql })
-    return res.affectedRows
+    const { affectedRows } = await this.runSQL<OkPacket>({ sql })
+    return affectedRows
   }
 
   override async deleteByQuery<ROW extends ObjectWithId>(
@@ -332,8 +332,8 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     _opt?: CommonDBOptions,
   ): Promise<number> {
     const sql = dbQueryToSQLDelete(q)
-    const res = await this.runSQL<any>({ sql })
-    return res.affectedRows
+    const { affectedRows } = await this.runSQL<OkPacket>({ sql })
+    return affectedRows
   }
 
   /**
