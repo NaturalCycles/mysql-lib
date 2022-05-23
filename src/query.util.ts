@@ -9,11 +9,17 @@ import { mapNameToMySQL } from './schema/mysql.schema.util'
 const MAX_PACKET_SIZE = 1024 * 1024 // 1Mb
 const MAX_ROW_SIZE = 800 * 1024 // 1Mb - margin
 
-export function dbQueryToSQLSelect(q: DBQuery<any>): string {
+/**
+ * Returns `null` if it detects that 0 rows will be returned,
+ * e.g when `IN ()` (empty array) is used.
+ */
+export function dbQueryToSQLSelect(q: DBQuery<any>): string | null {
   const tokens = selectTokens(q)
 
   // filters
-  tokens.push(...whereTokens(q))
+  const whereTokens = getWhereTokens(q)
+  if (!whereTokens) return null
+  tokens.push(...whereTokens)
 
   // order
   tokens.push(...groupOrderTokens(q))
@@ -24,11 +30,16 @@ export function dbQueryToSQLSelect(q: DBQuery<any>): string {
   return tokens.join(' ')
 }
 
-export function dbQueryToSQLDelete(q: DBQuery<any>): string {
+/**
+ * Returns null in "0 rows" case.
+ */
+export function dbQueryToSQLDelete(q: DBQuery<any>): string | null {
   const tokens = [`DELETE FROM`, mysql.escapeId(q.table)]
 
   // filters
-  tokens.push(...whereTokens(q))
+  const whereTokens = getWhereTokens(q)
+  if (!whereTokens) return null
+  tokens.push(...whereTokens)
 
   // offset/limit
   tokens.push(...offsetLimitTokens(q))
@@ -132,8 +143,11 @@ export function insertSQLSetSingle(table: string, record: Record<any, any>): Que
   }
 }
 
-export function dbQueryToSQLUpdate(q: DBQuery<any>, record: Record<any, any>): string {
+export function dbQueryToSQLUpdate(q: DBQuery<any>, record: Record<any, any>): string | null {
   // var sql = mysql.format('UPDATE posts SET modified = ? WHERE id = ?', [CURRENT_TIMESTAMP, 42]);
+  const whereTokens = getWhereTokens(q)
+  if (!whereTokens) return null
+
   const tokens = [
     `UPDATE`,
     mysql.escapeId(q.table),
@@ -141,7 +155,7 @@ export function dbQueryToSQLUpdate(q: DBQuery<any>, record: Record<any, any>): s
     Object.keys(record)
       .map(f => mysql.escapeId(mapNameToMySQL(f)) + ' = ?')
       .join(', '),
-    ...whereTokens(q),
+    ...whereTokens,
   ]
 
   return mysql.format(tokens.join(' '), Object.values(record))
@@ -200,10 +214,15 @@ const OP_MAP: Partial<Record<DBQueryFilterOperator, string>> = {
   '==': '=',
 }
 
-function whereTokens(q: DBQuery): string[] {
+/**
+ * Returns `null` for "guaranteed 0 rows" cases.
+ */
+function getWhereTokens(q: DBQuery): string[] | null {
   if (!q._filters.length) return []
 
-  return [
+  let returnNull = false
+
+  const tokens = [
     `WHERE`,
     q._filters
       .map(f => {
@@ -218,6 +237,8 @@ function whereTokens(q: DBQuery): string[] {
 
         if (Array.isArray(f.val)) {
           // special case for arrays
+          if (!f.val.length) returnNull = true
+
           return `${mysql.escapeId(mapNameToMySQL(f.name as string))} IN (${mysql.escape(f.val)})`
         }
 
@@ -229,4 +250,8 @@ function whereTokens(q: DBQuery): string[] {
       })
       .join(' AND '),
   ]
+
+  if (returnNull) return null
+
+  return tokens
 }

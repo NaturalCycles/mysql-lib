@@ -1,4 +1,4 @@
-import { Transform } from 'stream'
+import { Readable, Transform } from 'stream'
 import { promisify } from 'util'
 import {
   BaseCommonDB,
@@ -199,6 +199,12 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     _opt: MysqlDBOptions = {},
   ): Promise<RunQueryResult<OUT>> {
     const sql = dbQueryToSQLSelect(q)
+    if (!sql) {
+      return {
+        rows: [],
+      }
+    }
+
     const rows = (await this.runSQL<ROW[]>({ sql })).map(
       row => _mapKeys(_filterUndefinedValues(row, true), k => mapNameFromMySQL(k)) as any,
     )
@@ -254,6 +260,9 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     _opt: MysqlDBOptions = {},
   ): ReadableTyped<OUT> {
     const sql = dbQueryToSQLSelect(q)
+    if (!sql) {
+      return Readable.from([])
+    }
 
     if (this.cfg.logSQL) this.cfg.logger.log(`stream: ${sql}`)
 
@@ -323,6 +332,8 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   ): Promise<number> {
     if (!ids.length) return 0
     const sql = dbQueryToSQLDelete(new DBQuery(table).filterEq('id', ids))
+    if (!sql) return 0
+
     const { affectedRows } = await this.runSQL<OkPacket>({ sql })
     return affectedRows
   }
@@ -332,6 +343,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     _opt?: CommonDBOptions,
   ): Promise<number> {
     const sql = dbQueryToSQLDelete(q)
+    if (!sql) return 0
     const { affectedRows } = await this.runSQL<OkPacket>({ sql })
     return affectedRows
   }
