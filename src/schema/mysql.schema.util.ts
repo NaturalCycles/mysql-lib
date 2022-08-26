@@ -1,4 +1,5 @@
 import {
+  AnyObject,
   CommonLogger,
   JsonSchemaBoolean,
   JsonSchemaNumber,
@@ -79,7 +80,7 @@ export function jsonSchemaToMySQLDDL(
   return lines.join('\n')
 }
 
-export function mysqlTableStatsToJsonSchemaField<T = any>(
+export function mysqlTableStatsToJsonSchemaField<T extends AnyObject = any>(
   table: string,
   stats: MySQLTableStats[],
   logger: CommonLogger,
@@ -93,7 +94,7 @@ export function mysqlTableStatsToJsonSchemaField<T = any>(
   }
 
   stats.forEach(stat => {
-    const name = stat.Field
+    const name = stat.Field as keyof T
     const t = stat.Type.toLowerCase()
     const notNull = stat.Null?.toUpperCase() !== 'YES'
     if (notNull) {
@@ -112,7 +113,7 @@ export function mysqlTableStatsToJsonSchemaField<T = any>(
       s.properties[name] = { type: 'number' } as JsonSchemaNumber
     } else {
       logger.log(s)
-      throw new Error(`Unknown mysql field type ${name} ${stat.Type}`)
+      throw new Error(`Unknown mysql field type ${name as string} ${stat.Type}`)
     }
   })
 

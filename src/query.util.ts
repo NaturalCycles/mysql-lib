@@ -1,5 +1,4 @@
-import { DBQuery } from '@naturalcycles/db-lib'
-import { DBQueryFilterOperator } from '@naturalcycles/db-lib/src/query/dbQuery'
+import { DBQuery, DBQueryFilterOperator } from '@naturalcycles/db-lib'
 import { _hb, CommonLogger } from '@naturalcycles/js-lib'
 import { white, yellow } from '@naturalcycles/nodejs-lib/dist/colors'
 import { QueryOptions } from 'mysql'

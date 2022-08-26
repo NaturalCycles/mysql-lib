@@ -97,7 +97,7 @@ test('fieldName with dot', async () => {
 
   const items = createTestItemsDBM(5).map(r => ({ ...r, [fieldName]: 'vv' }))
   const schema = testItemDBMJsonSchema.build()
-  schema.properties[fieldName] = { type: 'string' }
+  schema.properties[fieldName as keyof TestItemDBM] = { type: 'string' }
 
   await db.createTable(table, schema, { dropIfExists: true })
   await db.saveBatch(table, items)
@@ -114,7 +114,7 @@ test('buffer', async () => {
   const items = createTestItemsDBM(5).map(r => ({ ...r, extra }))
 
   const schema = testItemDBMJsonSchema.build()
-  schema.properties['extra'] = { instanceof: 'Buffer' }
+  schema.properties['extra' as keyof TestItemDBM] = { instanceof: 'Buffer' }
 
   await db.createTable(table, schema, { dropIfExists: true })
   await db.saveBatch(table, items)
