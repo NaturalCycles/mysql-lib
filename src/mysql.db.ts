@@ -1,5 +1,5 @@
-import { Readable, Transform } from 'stream'
-import { promisify } from 'util'
+import { Readable, Transform } from 'node:stream'
+import { promisify } from 'node:util'
 import {
   BaseCommonDB,
   CommonDB,
@@ -325,7 +325,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   /**
    * Limitation: always returns [], regardless of which rows are actually deleted
    */
-  override async deleteByIds<ROW extends ObjectWithId>(
+  async deleteByIds<ROW extends ObjectWithId>(
     table: string,
     ids: ROW['id'][],
     _opt?: MysqlDBOptions,

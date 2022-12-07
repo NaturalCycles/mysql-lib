@@ -35,7 +35,7 @@ const db = new MysqlDB({
 })
 
 beforeAll(async () => {
-  await db.createTable(TEST_TABLE, testItemDBMJsonSchema.build(), { dropIfExists: true })
+  await db.createTable(TEST_TABLE, testItemDBMJsonSchema, { dropIfExists: true })
 })
 
 afterAll(async () => {
@@ -64,7 +64,7 @@ test('getTableSchema', async () => {
   // console.log(await db.getTables())
   const schema = await db.getTableSchema(TEST_TABLE)
   console.log(schema)
-  expect(testItemDBMJsonSchema.build()).toMatchObject(schema)
+  expect(testItemDBMJsonSchema).toMatchObject(schema)
 })
 
 test('saveBatch overwrite', async () => {
@@ -96,7 +96,7 @@ test('fieldName with dot', async () => {
   const table = TEST_TABLE + '2'
 
   const items = createTestItemsDBM(5).map(r => ({ ...r, [fieldName]: 'vv' }))
-  const schema = testItemDBMJsonSchema.build()
+  const schema = testItemDBMJsonSchema
   schema.properties[fieldName as keyof TestItemDBM] = { type: 'string' }
 
   await db.createTable(table, schema, { dropIfExists: true })
@@ -113,7 +113,7 @@ test('buffer', async () => {
 
   const items = createTestItemsDBM(5).map(r => ({ ...r, extra }))
 
-  const schema = testItemDBMJsonSchema.build()
+  const schema = testItemDBMJsonSchema
   schema.properties['extra' as keyof TestItemDBM] = { instanceof: 'Buffer' }
 
   await db.createTable(table, schema, { dropIfExists: true })
@@ -128,7 +128,7 @@ test('stringify objects', async () => {
   const item = createTestItemsDBM(1)[0]!
   item.k1 = { some: 'obj', c: 'd', e: 5 } as any
 
-  await db.createTable(TEST_TABLE, testItemDBMJsonSchema.build(), { dropIfExists: true })
+  await db.createTable(TEST_TABLE, testItemDBMJsonSchema, { dropIfExists: true })
   await db.saveBatch(TEST_TABLE, [item])
   const { rows } = await db.runQuery(new DBQuery(TEST_TABLE))
   // console.log(rows)
