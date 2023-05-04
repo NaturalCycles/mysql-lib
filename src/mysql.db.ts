@@ -10,6 +10,7 @@ import {
   RunQueryResult,
 } from '@naturalcycles/db-lib'
 import {
+  _assert,
   _filterUndefinedValues,
   _mapKeys,
   _mapValues,
@@ -143,7 +144,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
 
   async close(): Promise<void> {
     const pool = this.pool()
-    // eslint-disable-next-line @typescript-eslint/await-thenable
+
     await promisify(pool.end.bind(pool))()
     this.cfg.logger.log('closed')
   }
@@ -291,7 +292,15 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     // Stringify object values
     const rows = rowsInput.map(row =>
       _mapValues(row, (_k, v) => {
-        return v && typeof v === 'object' && !Buffer.isBuffer(v) ? JSON.stringify(v) : v
+        if (v && typeof v === 'object' && !Buffer.isBuffer(v)) {
+          // This is to avoid implicit Date stringification and mismatch: it gets saved as Date, but loaded as String
+          _assert(
+            !(v instanceof Date),
+            'mysql-lib does not support Date values, please stringify them before passing',
+          )
+          return JSON.stringify(v)
+        }
+        return v
       }),
     )
 
