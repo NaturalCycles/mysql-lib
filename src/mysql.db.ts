@@ -306,37 +306,34 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
       }),
     )
 
-    const verb = opt.saveMethod === 'insert' ? 'INSERT' : 'REPLACE'
-
-    if (opt.assignGeneratedIds && opt.saveMethod !== 'update') {
+    if (opt.assignGeneratedIds) {
       // Insert rows one-by-one, to get their auto-generated id
 
       let i = -1
       for await (const row of rows) {
         i++
-        const sql = insertSQL(table, [row], verb, this.cfg.logger)[0]!
-        const { insertId } = await this.runSQL<OkPacket>({ sql })
+        if (row.id) {
+          // Update already existing
+          const query = new DBQuery(table).filterEq('id', row.id)
+          await this.updateByQuery(query, _omit(row, ['id']))
+        } else {
+          // Create new
+          const sql = insertSQL(table, [row], 'INSERT', this.cfg.logger)[0]!
+          const { insertId } = await this.runSQL<OkPacket>({ sql })
 
-        // Mutate the input row with insertIt
-        rowsInput[i]!.id = insertId
+          // Mutate the input row with insertIt
+          rowsInput[i]!.id = insertId
+        }
       }
 
       return
     }
 
-    // inserts are split into multiple sentenses to respect the max_packet_size (1Mb usually)
-    if (opt.saveMethod === 'update') {
-      for await (const row of rows) {
-        _assert(row.id, 'Cannot update without providing an id')
-        const query = new DBQuery(table).filterEq('id', row.id)
-        await this.updateByQuery(query, _omit(row, ['id']))
-      }
-    } else {
-      const sqls = insertSQL(table, rows, verb, this.cfg.logger)
+    const verb = opt.saveMethod === 'insert' ? 'INSERT' : 'REPLACE'
+    const sqls = insertSQL(table, rows, verb, this.cfg.logger)
 
-      for await (const sql of sqls) {
-        await this.runSQL({ sql })
-      }
+    for await (const sql of sqls) {
+      await this.runSQL({ sql })
     }
   }
 
