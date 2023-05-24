@@ -329,8 +329,18 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
       return
     }
 
-    const verb = opt.saveMethod === 'insert' ? 'INSERT' : 'REPLACE'
+    if (opt.saveMethod === 'update') {
+      // TODO: This fails if a combination of entities with id and without id are parsed
+      for await (const row of rows) {
+        // Update already existing
+        _assert(row.id, 'id is required for updating')
+        const query = new DBQuery(table).filterEq('id', row.id)
+        await this.updateByQuery(query, _omit(row, ['id']))
+      }
+      return
+    }
 
+    const verb = opt.saveMethod === 'insert' ? 'INSERT' : 'REPLACE'
     // inserts are split into multiple sentenses to respect the max_packet_size (1Mb usually)
     const sqls = insertSQL(table, rows, verb, this.cfg.logger)
 
