@@ -330,6 +330,8 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     }
 
     const verb = opt.saveMethod === 'insert' ? 'INSERT' : 'REPLACE'
+
+    // inserts are split into multiple sentenses to respect the max_packet_size (1Mb usually)
     const sqls = insertSQL(table, rows, verb, this.cfg.logger)
 
     for await (const sql of sqls) {
