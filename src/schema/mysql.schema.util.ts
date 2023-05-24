@@ -126,9 +126,9 @@ export function mysqlTableStatsToJsonSchemaField<T extends AnyObject = any>(
  * @param name
  */
 export function mapNameToMySQL(name: string): string {
-  return name.replace(/\./g, '_dot_')
+  return name.replaceAll('.', '_dot_')
 }
 
 export function mapNameFromMySQL(name: string): string {
-  return name.replace(/_dot_/g, '.')
+  return name.replaceAll('_dot_', '.')
 }
