@@ -1,5 +1,6 @@
 import { Readable, Transform } from 'node:stream'
 import { promisify } from 'node:util'
+import { DBPatch } from '@naturalcycles/db-lib'
 import {
   BaseCommonDB,
   CommonDB,
@@ -15,6 +16,7 @@ import {
   _mapKeys,
   _mapValues,
   _Memo,
+  _omit,
   AnyObjectWithId,
   CommonLogger,
   commonLoggerPrefix,
@@ -34,7 +36,7 @@ import {
   TypeCast,
 } from 'mysql'
 import * as mysql from 'mysql'
-import { dbQueryToSQLDelete, dbQueryToSQLSelect, insertSQL } from './query.util'
+import { dbQueryToSQLDelete, dbQueryToSQLSelect, dbQueryToSQLUpdate, insertSQL } from './query.util'
 import {
   jsonSchemaToMySQLDDL,
   mapNameFromMySQL,
@@ -306,7 +308,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
 
     const verb = opt.saveMethod === 'insert' ? 'INSERT' : 'REPLACE'
 
-    if (opt.assignGeneratedIds) {
+    if (opt.assignGeneratedIds && opt.saveMethod !== 'update') {
       // Insert rows one-by-one, to get their auto-generated id
 
       let i = -1
@@ -323,10 +325,18 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     }
 
     // inserts are split into multiple sentenses to respect the max_packet_size (1Mb usually)
-    const sqls = insertSQL(table, rows, verb, this.cfg.logger)
+    if (opt.saveMethod === 'update') {
+      for await (const row of rows) {
+        _assert(row.id, 'Cannot update without providing an id')
+        const query = new DBQuery(table).filterEq('id', row.id)
+        await this.updateByQuery(query, _omit(row, ['id']))
+      }
+    } else {
+      const sqls = insertSQL(table, rows, verb, this.cfg.logger)
 
-    for await (const sql of sqls) {
-      await this.runSQL({ sql })
+      for await (const sql of sqls) {
+        await this.runSQL({ sql })
+      }
     }
   }
 
@@ -392,5 +402,16 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     })
 
     return mysqlTableStatsToJsonSchemaField<ROW>(table, stats, this.cfg.logger)
+  }
+
+  override async updateByQuery<ROW extends ObjectWithId>(
+    q: DBQuery<ROW>,
+    patch: DBPatch<ROW>,
+  ): Promise<number> {
+    const sql = dbQueryToSQLUpdate(q, patch)
+    if (!sql) return 0
+
+    const { affectedRows } = await this.runSQL<OkPacket>({ sql })
+    return affectedRows
   }
 }
