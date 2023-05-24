@@ -1,12 +1,12 @@
 import { Readable, Transform } from 'node:stream'
 import { promisify } from 'node:util'
+import { DBPatch } from '@naturalcycles/db-lib'
 import {
   BaseCommonDB,
   CommonDB,
   CommonDBCreateOptions,
   CommonDBOptions,
   CommonDBSaveOptions,
-  DBIncrement,
   DBQuery,
   RunQueryResult,
 } from '@naturalcycles/db-lib'
@@ -16,6 +16,7 @@ import {
   _mapKeys,
   _mapValues,
   _Memo,
+  _omit,
   AnyObjectWithId,
   CommonLogger,
   commonLoggerPrefix,
@@ -328,7 +329,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
       for await (const row of rows) {
         _assert(row.id, 'Cannot update without providing an id')
         const query = new DBQuery(table).filterEq('id', row.id)
-        await this.updateByQuery(query, row)
+        await this.updateByQuery(query, _omit(row, ['id']))
       }
     } else {
       const sqls = insertSQL(table, rows, verb, this.cfg.logger)
@@ -403,9 +404,9 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     return mysqlTableStatsToJsonSchemaField<ROW>(table, stats, this.cfg.logger)
   }
 
-  override async updateByQuery<ROW extends ObjectWithId<string | number>>(
+  override async updateByQuery<ROW extends ObjectWithId>(
     q: DBQuery<ROW>,
-    patch: Partial<Record<keyof ROW, DBIncrement | ROW[keyof ROW]>>,
+    patch: DBPatch<ROW>,
   ): Promise<number> {
     const sql = dbQueryToSQLUpdate(q, patch)
     if (!sql) return 0
