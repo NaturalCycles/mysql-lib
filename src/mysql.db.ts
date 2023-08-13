@@ -25,7 +25,7 @@ import {
   ObjectWithId,
 } from '@naturalcycles/js-lib'
 import { ReadableTyped } from '@naturalcycles/nodejs-lib'
-import { white } from '@naturalcycles/nodejs-lib/dist/colors'
+import { white } from '@naturalcycles/nodejs-lib'
 import {
   Connection,
   OkPacket,
@@ -193,7 +193,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     if (!ids.length) return []
     const q = new DBQuery<ROW>(table).filterEq('id', ids)
     const { rows } = await this.runQuery(q, opt)
-    return rows.map(r => _mapKeys(r, k => mapNameFromMySQL(k)) as any)
+    return rows.map(r => _mapKeys(r, k => mapNameFromMySQL(k as string)) as any)
   }
 
   // QUERY
@@ -209,13 +209,13 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     }
 
     const rows = (await this.runSQL<ROW[]>({ sql })).map(
-      row => _mapKeys(_filterUndefinedValues(row, true), k => mapNameFromMySQL(k)) as any,
+      row => _mapKeys(_filterUndefinedValues(row, true), k => mapNameFromMySQL(k as string)) as any,
     )
 
     // edge case where 0 fields are selected
     if (q._selectedFieldNames?.length === 0) {
       return {
-        rows: rows.map(_ => ({} as any)),
+        rows: rows.map(_ => ({}) as any),
       }
     }
 
@@ -293,7 +293,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
 
     // Stringify object values
     const rows = rowsInput.map(row =>
-      _mapValues(row, (_k, v) => {
+      _mapValues<ROW>(row, (_k, v) => {
         if (v && typeof v === 'object' && !Buffer.isBuffer(v)) {
           // This is to avoid implicit Date stringification and mismatch: it gets saved as Date, but loaded as String
           _assert(
