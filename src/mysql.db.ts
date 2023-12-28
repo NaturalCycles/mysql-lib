@@ -1,7 +1,7 @@
 import { Readable, Transform } from 'node:stream'
 import { promisify } from 'node:util'
-import { DBPatch } from '@naturalcycles/db-lib'
 import {
+  DBPatch,
   BaseCommonDB,
   CommonDB,
   CommonDBCreateOptions,
@@ -24,8 +24,7 @@ import {
   JsonSchemaRootObject,
   ObjectWithId,
 } from '@naturalcycles/js-lib'
-import { ReadableTyped } from '@naturalcycles/nodejs-lib'
-import { white } from '@naturalcycles/nodejs-lib'
+import { ReadableTyped, white } from '@naturalcycles/nodejs-lib'
 import {
   Connection,
   OkPacket,
@@ -322,7 +321,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
           const { insertId } = await this.runSQL<OkPacket>({ sql })
 
           // Mutate the input row with insertIt
-          rowsInput[i]!.id = insertId
+          rowsInput[i]!.id = insertId as any // this is because we no longer support number ids in CommonDB
         }
       }
 
