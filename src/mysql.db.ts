@@ -9,6 +9,9 @@ import {
   CommonDBSaveOptions,
   DBQuery,
   RunQueryResult,
+  CommonDBSupport,
+  commonDBFullSupport,
+  CommonDBType,
 } from '@naturalcycles/db-lib'
 import {
   _assert,
@@ -91,6 +94,14 @@ const typeCast: TypeCast = (field, next) => {
 }
 
 export class MysqlDB extends BaseCommonDB implements CommonDB {
+  override dbType = CommonDBType.relational
+
+  override support: CommonDBSupport = {
+    ...commonDBFullSupport,
+    updateSaveMethod: false,
+    transactions: false,
+  }
+
   constructor(cfg: MysqlDBCfg = {}) {
     super()
     this.cfg = {
@@ -352,7 +363,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   /**
    * Limitation: always returns [], regardless of which rows are actually deleted
    */
-  async deleteByIds<ROW extends ObjectWithId>(
+  override async deleteByIds<ROW extends ObjectWithId>(
     table: string,
     ids: ROW['id'][],
     _opt?: MysqlDBOptions,

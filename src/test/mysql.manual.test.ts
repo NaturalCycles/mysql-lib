@@ -42,23 +42,9 @@ afterAll(async () => {
   await db.close()
 })
 
-describe('runCommonDBTest', () =>
-  runCommonDBTest(
-    db,
-    {
-      update: false,
-    },
-    { allowExtraPropertiesInResponse: true },
-  ))
+describe('runCommonDBTest', () => runCommonDBTest(db, { allowExtraPropertiesInResponse: true }))
 
-describe('runCommonDaoTest', () =>
-  runCommonDaoTest(
-    db,
-    {
-      update: false,
-    },
-    { allowExtraPropertiesInResponse: false },
-  ))
+describe('runCommonDaoTest', () => runCommonDaoTest(db, { allowExtraPropertiesInResponse: false }))
 
 test('getTableSchema', async () => {
   // console.log(await db.getTables())
