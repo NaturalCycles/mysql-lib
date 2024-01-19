@@ -20,12 +20,13 @@ import {
   _mapValues,
   _Memo,
   _omit,
-  AnyObjectWithId,
+  AnyPartialObjectWithId,
   CommonLogger,
   commonLoggerPrefix,
   JsonSchemaObject,
   JsonSchemaRootObject,
-  ObjectWithId,
+  PartialObjectWithId,
+  Saved,
 } from '@naturalcycles/js-lib'
 import { ReadableTyped, white } from '@naturalcycles/nodejs-lib'
 import {
@@ -47,7 +48,7 @@ import {
 } from './schema/mysql.schema.util'
 
 export interface MysqlDBOptions extends CommonDBOptions {}
-export interface MysqlDBSaveOptions<ROW extends Partial<ObjectWithId> = AnyObjectWithId>
+export interface MysqlDBSaveOptions<ROW extends PartialObjectWithId = AnyPartialObjectWithId>
   extends CommonDBSaveOptions<ROW> {}
 
 /**
@@ -195,11 +196,11 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   }
 
   // GET
-  override async getByIds<ROW extends ObjectWithId>(
+  override async getByIds<ROW extends PartialObjectWithId>(
     table: string,
-    ids: ROW['id'][],
+    ids: string[],
     opt: MysqlDBOptions = {},
-  ): Promise<ROW[]> {
+  ): Promise<Saved<ROW>[]> {
     if (!ids.length) return []
     const q = new DBQuery<ROW>(table).filterEq('id', ids)
     const { rows } = await this.runQuery(q, opt)
@@ -207,10 +208,10 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   }
 
   // QUERY
-  override async runQuery<ROW extends ObjectWithId, OUT = ROW>(
+  override async runQuery<ROW extends PartialObjectWithId>(
     q: DBQuery<ROW>,
     _opt: MysqlDBOptions = {},
-  ): Promise<RunQueryResult<OUT>> {
+  ): Promise<RunQueryResult<Saved<ROW>>> {
     const sql = dbQueryToSQLSelect(q)
     if (!sql) {
       return {
@@ -260,7 +261,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     }
   }
 
-  override async runQueryCount<ROW extends ObjectWithId>(
+  override async runQueryCount<ROW extends PartialObjectWithId>(
     q: DBQuery<ROW>,
     _opt?: CommonDBOptions,
   ): Promise<number> {
@@ -268,10 +269,10 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     return (rows[0] as any)._count
   }
 
-  override streamQuery<ROW extends ObjectWithId, OUT = ROW>(
+  override streamQuery<ROW extends PartialObjectWithId>(
     q: DBQuery<ROW>,
     _opt: MysqlDBOptions = {},
-  ): ReadableTyped<OUT> {
+  ): ReadableTyped<Saved<ROW>> {
     const sql = dbQueryToSQLSelect(q)
     if (!sql) {
       return Readable.from([])
@@ -294,7 +295,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   }
 
   // SAVE
-  override async saveBatch<ROW extends Partial<ObjectWithId>>(
+  override async saveBatch<ROW extends PartialObjectWithId>(
     table: string,
     rowsInput: ROW[],
     opt: MysqlDBSaveOptions<ROW> = {},
@@ -363,11 +364,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   /**
    * Limitation: always returns [], regardless of which rows are actually deleted
    */
-  override async deleteByIds<ROW extends ObjectWithId>(
-    table: string,
-    ids: ROW['id'][],
-    _opt?: MysqlDBOptions,
-  ): Promise<number> {
+  override async deleteByIds(table: string, ids: string[], _opt?: MysqlDBOptions): Promise<number> {
     if (!ids.length) return 0
     const sql = dbQueryToSQLDelete(new DBQuery(table).filterEq('id', ids))
     if (!sql) return 0
@@ -376,7 +373,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     return affectedRows
   }
 
-  override async deleteByQuery<ROW extends ObjectWithId>(
+  override async deleteByQuery<ROW extends PartialObjectWithId>(
     q: DBQuery<ROW>,
     _opt?: CommonDBOptions,
   ): Promise<number> {
@@ -396,7 +393,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
   /**
    * dropIfExists=true needed as a safety check
    */
-  override async createTable<ROW extends ObjectWithId>(
+  override async createTable<ROW extends PartialObjectWithId>(
     table: string,
     schema: JsonSchemaObject<ROW>,
     opt: CommonDBCreateOptions = {},
@@ -413,7 +410,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
       .filter(Boolean)
   }
 
-  override async getTableSchema<ROW extends ObjectWithId>(
+  override async getTableSchema<ROW extends PartialObjectWithId>(
     table: string,
   ): Promise<JsonSchemaRootObject<ROW>> {
     const stats = await this.runSQL<MySQLTableStats[]>({
@@ -423,7 +420,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     return mysqlTableStatsToJsonSchemaField<ROW>(table, stats, this.cfg.logger)
   }
 
-  override async updateByQuery<ROW extends ObjectWithId>(
+  override async updateByQuery<ROW extends PartialObjectWithId>(
     q: DBQuery<ROW>,
     patch: DBPatch<ROW>,
   ): Promise<number> {
