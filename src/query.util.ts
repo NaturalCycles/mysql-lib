@@ -1,5 +1,5 @@
 import { DBQuery, DBQueryFilterOperator } from '@naturalcycles/db-lib'
-import { _hb, CommonLogger } from '@naturalcycles/js-lib'
+import { _hb, AnyObjectWithId, CommonLogger } from '@naturalcycles/js-lib'
 import { white, yellow } from '@naturalcycles/nodejs-lib'
 import { QueryOptions } from 'mysql'
 import * as mysql from 'mysql'
@@ -160,7 +160,7 @@ export function dbQueryToSQLUpdate(q: DBQuery<any>, record: Record<any, any>): s
   return mysql.format(tokens.join(' '), Object.values(record))
 }
 
-function selectTokens(q: DBQuery): string[] {
+function selectTokens(q: DBQuery<any>): string[] {
   let fields = ['*']
 
   if (q._selectedFieldNames) {
@@ -192,7 +192,7 @@ function offsetLimitTokens(q: DBQuery<any>): string[] {
   return tokens
 }
 
-function groupOrderTokens(q: DBQuery): string[] {
+function groupOrderTokens(q: DBQuery<AnyObjectWithId>): string[] {
   const t: string[] = []
 
   if (q._groupByFieldNames?.length) {
@@ -216,7 +216,7 @@ const OP_MAP: Partial<Record<DBQueryFilterOperator, string>> = {
 /**
  * Returns `null` for "guaranteed 0 rows" cases.
  */
-function getWhereTokens(q: DBQuery): string[] | null {
+function getWhereTokens(q: DBQuery<any>): string[] | null {
   if (!q._filters.length) return []
 
   let returnNull = false

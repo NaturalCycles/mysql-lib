@@ -104,7 +104,7 @@ test('buffer', async () => {
 
   await db.createTable(table, schema, { dropIfExists: true })
   await db.saveBatch(table, items)
-  const { rows } = await db.runQuery(new DBQuery(table))
+  const { rows } = await db.runQuery<any>(new DBQuery(table))
   // console.log(items2)
   console.log(await inflateToString(rows[0]!['extra']))
   expect(rows).toEqual(items)

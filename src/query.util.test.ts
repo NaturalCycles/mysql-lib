@@ -11,7 +11,7 @@ test('dbQueryToSQLSelect', () => {
   expect(sql).toMatchSnapshot()
 
   sql = dbQueryToSQLSelect(
-    new DBQuery('TBL1')
+    new DBQuery<any>('TBL1')
       .filterEq('a', 'b')
       .filter('c', '>', '2019')
       .order('aaa')
@@ -21,19 +21,19 @@ test('dbQueryToSQLSelect', () => {
   // console.log(sql)
   expect(sql).toMatchSnapshot()
 
-  sql = dbQueryToSQLSelect(new DBQuery('TBL1').filter('num', '>', 15))
+  sql = dbQueryToSQLSelect(new DBQuery<any>('TBL1').filter('num', '>', 15))
   // console.log(sql)
   expect(sql).toMatchSnapshot()
 
   // NULL cases
   sql = dbQueryToSQLSelect(
-    new DBQuery('TBL1').filterEq('a', undefined).filterEq('a2', null).filter('a3', '>', null),
+    new DBQuery<any>('TBL1').filterEq('a', undefined).filterEq('a2', null).filter('a3', '>', null),
   )
   // console.log(sql)
   expect(sql).toMatchSnapshot()
 
   // ARRAY CASES
-  sql = dbQueryToSQLSelect(new DBQuery('TBL1').filterEq('a', ['a1', 'a2', 'a3']))
+  sql = dbQueryToSQLSelect(new DBQuery<any>('TBL1').filterEq('a', ['a1', 'a2', 'a3']))
   // console.log(sql)
   expect(sql).toMatchSnapshot()
 })
@@ -42,7 +42,7 @@ test('dbQueryToSQLDelete', () => {
   let sql = dbQueryToSQLDelete(new DBQuery('TBL1'))
   expect(sql).toMatchSnapshot()
 
-  sql = dbQueryToSQLDelete(new DBQuery('TBL1').filter('a', '>', null))
+  sql = dbQueryToSQLDelete(new DBQuery<any>('TBL1').filter('a', '>', null))
   expect(sql).toMatchSnapshot()
 })
 
@@ -60,7 +60,7 @@ test('dbQueryToSQLUpdate', () => {
   // console.log(sql)
   expect(sql).toMatchSnapshot()
 
-  sql = dbQueryToSQLUpdate(new DBQuery(TEST_TABLE).filter('a', '>', 5), item)
+  sql = dbQueryToSQLUpdate(new DBQuery<any>(TEST_TABLE).filter('a', '>', 5), item)
   // console.log(sql)
   expect(sql).toMatchSnapshot()
 })
