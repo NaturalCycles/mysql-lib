@@ -1,7 +1,7 @@
 {
   "name": "@naturalcycles/mysql-lib",
   "scripts": {
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "dependencies": {
     "@naturalcycles/db-lib": "^9.1.0",
@@ -34,7 +34,7 @@
     "url": "https://github.com/NaturalCycles/mysql-lib"
   },
   "engines": {
-    "node": ">=16.15.0"
+    "node": ">=18.12.0"
   },
   "version": "3.8.1",
   "description": "MySQL client implementing CommonDB interface",
