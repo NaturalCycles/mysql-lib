@@ -1,4 +1,4 @@
-import { Readable, Transform } from 'node:stream'
+import { Readable } from 'node:stream'
 import { promisify } from 'node:util'
 import {
   DBPatch,
@@ -278,17 +278,9 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     if (this.cfg.logSQL) this.cfg.logger.log(`stream: ${sql}`)
 
     // return this.streamSQL(sql, opt)
-    return this.pool()
-      .query(sql)
-      .stream()
-      .pipe(
-        new Transform({
-          objectMode: true,
-          transform(row, _encoding, cb) {
-            cb(null, _filterUndefinedValues(row, true))
-          },
-        }),
-      )
+    return (this.pool().query(sql).stream() as ReadableTyped<ROW>).map(row =>
+      _filterUndefinedValues(row, true),
+    )
   }
 
   // SAVE

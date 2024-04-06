@@ -1,6 +1,5 @@
-import { Transform } from 'node:stream'
 import { CommonDBCreateOptions, CommonKeyValueDB, KeyValueDBTuple } from '@naturalcycles/db-lib'
-import { pMap } from '@naturalcycles/js-lib'
+import { ObjectWithId, pMap } from '@naturalcycles/js-lib'
 import { ReadableTyped } from '@naturalcycles/nodejs-lib'
 import { QueryOptions } from 'mysql'
 import { MysqlDB, MysqlDBCfg } from './mysql.db'
@@ -78,18 +77,7 @@ export class MySQLKeyValueDB implements CommonKeyValueDB {
     if (limit) sql += ` LIMIT ${limit}`
     if (this.cfg.logSQL) this.db.cfg.logger.log(`stream: ${sql}`)
 
-    return this.db
-      .pool()
-      .query(sql)
-      .stream()
-      .pipe(
-        new Transform({
-          objectMode: true,
-          transform(row, _, cb) {
-            cb(null, row.id)
-          },
-        }),
-      )
+    return (this.db.pool().query(sql).stream() as ReadableTyped<ObjectWithId>).map(row => row.id)
   }
 
   streamValues(table: string, limit?: number): ReadableTyped<Buffer> {
@@ -97,18 +85,7 @@ export class MySQLKeyValueDB implements CommonKeyValueDB {
     if (limit) sql += ` LIMIT ${limit}`
     if (this.cfg.logSQL) this.db.cfg.logger.log(`stream: ${sql}`)
 
-    return this.db
-      .pool()
-      .query(sql)
-      .stream()
-      .pipe(
-        new Transform({
-          objectMode: true,
-          transform(row, _, cb) {
-            cb(null, row.v)
-          },
-        }),
-      )
+    return (this.db.pool().query(sql).stream() as ReadableTyped<{ v: Buffer }>).map(row => row.v)
   }
 
   streamEntries(table: string, limit?: number): ReadableTyped<KeyValueDBTuple> {
@@ -116,18 +93,10 @@ export class MySQLKeyValueDB implements CommonKeyValueDB {
     if (limit) sql += ` LIMIT ${limit}`
     if (this.cfg.logSQL) this.db.cfg.logger.log(`stream: ${sql}`)
 
-    return this.db
-      .pool()
-      .query(sql)
-      .stream()
-      .pipe(
-        new Transform({
-          objectMode: true,
-          transform(row, _, cb) {
-            cb(null, [row.id, row.v])
-          },
-        }),
-      )
+    return (this.db.pool().query(sql).stream() as ReadableTyped<KeyValueObject>).map(row => [
+      row.id,
+      row.v,
+    ])
   }
 
   async beginTransaction(): Promise<void> {
