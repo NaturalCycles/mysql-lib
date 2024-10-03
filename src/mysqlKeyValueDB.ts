@@ -1,5 +1,5 @@
 import { CommonDBCreateOptions, CommonKeyValueDB, KeyValueDBTuple } from '@naturalcycles/db-lib'
-import { ObjectWithId, pMap } from '@naturalcycles/js-lib'
+import { AppError, ObjectWithId, pMap } from '@naturalcycles/js-lib'
 import { ReadableTyped } from '@naturalcycles/nodejs-lib'
 import { QueryOptions } from 'mysql'
 import { MysqlDB, MysqlDBCfg } from './mysql.db'
@@ -113,5 +113,9 @@ export class MySQLKeyValueDB implements CommonKeyValueDB {
 
     const rows = await this.db.runSQL<{ cnt: number }[]>({ sql })
     return rows[0]!.cnt
+  }
+
+  async increment(_table: string, _id: string, _by?: number): Promise<number> {
+    throw new AppError('MySQLKeyValueDB.increment() is not implemented')
   }
 }
