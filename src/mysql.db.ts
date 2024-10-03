@@ -1,17 +1,17 @@
 import { Readable } from 'node:stream'
 import { promisify } from 'node:util'
 import {
-  DBPatch,
   BaseCommonDB,
   CommonDB,
   CommonDBCreateOptions,
+  commonDBFullSupport,
   CommonDBOptions,
   CommonDBSaveOptions,
+  CommonDBSupport,
+  CommonDBType,
+  DBPatch,
   DBQuery,
   RunQueryResult,
-  CommonDBSupport,
-  commonDBFullSupport,
-  CommonDBType,
 } from '@naturalcycles/db-lib'
 import {
   _assert,
@@ -253,7 +253,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
       .map(s => s.trim())
       .filter(Boolean)
 
-    for await (const sql of queries) {
+    for (const sql of queries) {
       await this.runSQL({ sql })
     }
   }
@@ -310,7 +310,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
       // Insert rows one-by-one, to get their auto-generated id
 
       let i = -1
-      for await (const row of rows) {
+      for (const row of rows) {
         i++
         if (row.id) {
           // Update already existing
@@ -331,7 +331,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
 
     if (opt.saveMethod === 'update') {
       // TODO: This fails if a combination of entities with id and without id are parsed
-      for await (const row of rows) {
+      for (const row of rows) {
         // Update already existing
         _assert(row.id, 'id is required for updating')
         const query = new DBQuery(table).filterEq('id', row.id)
@@ -344,7 +344,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     // inserts are split into multiple sentenses to respect the max_packet_size (1Mb usually)
     const sqls = insertSQL(table, rows, verb, this.cfg.logger)
 
-    for await (const sql of sqls) {
+    for (const sql of sqls) {
       await this.runSQL({ sql })
     }
   }

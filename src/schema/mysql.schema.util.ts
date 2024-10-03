@@ -39,7 +39,7 @@ export function jsonSchemaToMySQLDDL(
       return `id VARCHAR(255) NOT NULL`
     }
 
-    let type
+    let type: string
 
     if (s.type === 'string') {
       // can specify isoDate later
