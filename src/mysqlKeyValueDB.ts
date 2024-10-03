@@ -115,7 +115,7 @@ export class MySQLKeyValueDB implements CommonKeyValueDB {
     return rows[0]!.cnt
   }
 
-    async increment(_table: string, _id: string, _by?: number): Promise<number> {
+  async increment(_table: string, _id: string, _by?: number): Promise<number> {
     throw new AppError('MySQLKeyValueDB.increment() is not implemented')
   }
 }
