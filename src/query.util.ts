@@ -142,7 +142,7 @@ export function insertSQLSetSingle(table: string, record: Record<any, any>): Que
   }
 }
 
-export function dbQueryToSQLUpdate(q: DBQuery<any>, record: Record<any, any>): string | null {
+export function dbQueryToSQLUpdate(q: DBQuery<any>, patch: Record<any, any>): string | null {
   // var sql = mysql.format('UPDATE posts SET modified = ? WHERE id = ?', [CURRENT_TIMESTAMP, 42]);
   const whereTokens = getWhereTokens(q)
   if (!whereTokens) return null
@@ -151,13 +151,13 @@ export function dbQueryToSQLUpdate(q: DBQuery<any>, record: Record<any, any>): s
     `UPDATE`,
     mysql.escapeId(q.table),
     `SET`,
-    Object.keys(record)
+    Object.keys(patch)
       .map(f => mysql.escapeId(mapNameToMySQL(f)) + ' = ?')
       .join(', '),
     ...whereTokens,
   ]
 
-  return mysql.format(tokens.join(' '), Object.values(record))
+  return mysql.format(tokens.join(' '), Object.values(patch))
 }
 
 function selectTokens(q: DBQuery<any>): string[] {

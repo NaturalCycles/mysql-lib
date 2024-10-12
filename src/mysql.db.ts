@@ -9,7 +9,6 @@ import {
   CommonDBSaveOptions,
   CommonDBSupport,
   CommonDBType,
-  DBPatch,
   DBQuery,
   RunQueryResult,
 } from '@naturalcycles/db-lib'
@@ -96,8 +95,9 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
 
   override support: CommonDBSupport = {
     ...commonDBFullSupport,
-    updateSaveMethod: false,
-    transactions: false,
+    updateSaveMethod: false, // todo: can be implemented
+    transactions: false, // todo: can be implemented
+    increment: false, // todo: can be implemented
   }
 
   constructor(cfg: MysqlDBCfg = {}) {
@@ -315,7 +315,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
         if (row.id) {
           // Update already existing
           const query = new DBQuery(table).filterEq('id', row.id)
-          await this.updateByQuery(query, _omit(row, ['id']))
+          await this.patchByQuery(query, _omit(row, ['id']))
         } else {
           // Create new
           const sql = insertSQL(table, [row], 'INSERT', this.cfg.logger)[0]!
@@ -335,7 +335,7 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
         // Update already existing
         _assert(row.id, 'id is required for updating')
         const query = new DBQuery(table).filterEq('id', row.id)
-        await this.updateByQuery(query, _omit(row, ['id']))
+        await this.patchByQuery(query, _omit(row, ['id']))
       }
       return
     }
@@ -409,9 +409,9 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
     return mysqlTableStatsToJsonSchemaField<ROW>(table, stats, this.cfg.logger)
   }
 
-  override async updateByQuery<ROW extends ObjectWithId>(
+  override async patchByQuery<ROW extends ObjectWithId>(
     q: DBQuery<ROW>,
-    patch: DBPatch<ROW>,
+    patch: Partial<ROW>,
   ): Promise<number> {
     const sql = dbQueryToSQLUpdate(q, patch)
     if (!sql) return 0
