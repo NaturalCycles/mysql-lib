@@ -2,16 +2,17 @@ import {
   CommonDBCreateOptions,
   CommonKeyValueDB,
   commonKeyValueDBFullSupport,
+  KeyValueDBTuple,
 } from '@naturalcycles/db-lib'
 import { IncrementTuple } from '@naturalcycles/db-lib/dist/kv/commonKeyValueDB'
-import { AppError, KeyValueTuple, ObjectWithId, pMap } from '@naturalcycles/js-lib'
+import { AppError, ObjectWithId, pMap } from '@naturalcycles/js-lib'
 import { ReadableTyped } from '@naturalcycles/nodejs-lib'
 import { QueryOptions } from 'mysql'
 import { MysqlDB, MysqlDBCfg } from './mysql.db'
 
-interface KeyValueObject<V> {
+interface KeyValueObject {
   id: string
-  v: V
+  v: Buffer
 }
 
 export class MySQLKeyValueDB implements CommonKeyValueDB {
@@ -45,12 +46,12 @@ export class MySQLKeyValueDB implements CommonKeyValueDB {
     await this.db.runSQL({ sql })
   }
 
-  async getByIds<V>(table: string, ids: string[]): Promise<KeyValueTuple<string, V>[]> {
+  async getByIds(table: string, ids: string[]): Promise<KeyValueDBTuple[]> {
     if (!ids.length) return []
 
     const sql = `SELECT id,v FROM ${table} where id in (${ids.map(id => `"${id}"`).join(',')})`
 
-    const rows = await this.db.runSQL<KeyValueObject<V>[]>({ sql })
+    const rows = await this.db.runSQL<KeyValueObject[]>({ sql })
 
     return rows.map(({ id, v }) => [id, v])
   }
@@ -68,7 +69,7 @@ export class MySQLKeyValueDB implements CommonKeyValueDB {
     await this.db.runSQL({ sql })
   }
 
-  async saveBatch<V>(table: string, entries: KeyValueTuple<string, V>[]): Promise<void> {
+  async saveBatch(table: string, entries: KeyValueDBTuple[]): Promise<void> {
     const statements: QueryOptions[] = entries.map(([id, buf]) => {
       return {
         sql: `INSERT INTO ${table} (id, v) VALUES (?, ?)`,
@@ -90,20 +91,20 @@ export class MySQLKeyValueDB implements CommonKeyValueDB {
     return (this.db.pool().query(sql).stream() as ReadableTyped<ObjectWithId>).map(row => row.id)
   }
 
-  streamValues<V>(table: string, limit?: number): ReadableTyped<V> {
+  streamValues(table: string, limit?: number): ReadableTyped<Buffer> {
     let sql = `SELECT v FROM ${table}`
     if (limit) sql += ` LIMIT ${limit}`
     if (this.cfg.logSQL) this.db.cfg.logger.log(`stream: ${sql}`)
 
-    return (this.db.pool().query(sql).stream() as ReadableTyped<{ v: V }>).map(row => row.v)
+    return (this.db.pool().query(sql).stream() as ReadableTyped<{ v: Buffer }>).map(row => row.v)
   }
 
-  streamEntries<V>(table: string, limit?: number): ReadableTyped<KeyValueTuple<string, V>> {
+  streamEntries(table: string, limit?: number): ReadableTyped<KeyValueDBTuple> {
     let sql = `SELECT id,v FROM ${table}`
     if (limit) sql += ` LIMIT ${limit}`
     if (this.cfg.logSQL) this.db.cfg.logger.log(`stream: ${sql}`)
 
-    return (this.db.pool().query(sql).stream() as ReadableTyped<KeyValueObject<V>>).map(row => [
+    return (this.db.pool().query(sql).stream() as ReadableTyped<KeyValueObject>).map(row => [
       row.id,
       row.v,
     ])
@@ -123,10 +124,6 @@ export class MySQLKeyValueDB implements CommonKeyValueDB {
 
     const rows = await this.db.runSQL<{ cnt: number }[]>({ sql })
     return rows[0]!.cnt
-  }
-
-  async increment(_table: string, _id: string, _by?: number): Promise<number> {
-    throw new AppError('MySQLKeyValueDB.increment() is not implemented')
   }
 
   async incrementBatch(_table: string, _entries: IncrementTuple[]): Promise<IncrementTuple[]> {
