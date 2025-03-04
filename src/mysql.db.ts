@@ -1,4 +1,4 @@
-import { Readable } from 'node:stream'
+import { Readable, Transform } from 'node:stream'
 import { promisify } from 'node:util'
 import {
   BaseCommonDB,
@@ -277,10 +277,21 @@ export class MysqlDB extends BaseCommonDB implements CommonDB {
 
     if (this.cfg.logSQL) this.cfg.logger.log(`stream: ${sql}`)
 
-    // return this.streamSQL(sql, opt)
-    return (this.pool().query(sql).stream() as ReadableTyped<ROW>).map(row =>
-      _filterUndefinedValues(row, true),
-    )
+    // todo: this is nice, but `mysql` package uses `readable-stream@2` which is not compatible with `node:stream` iterable helpers
+    // return (this.pool().query(sql).stream() as ReadableTyped<ROW>).map(row =>
+    //   _filterUndefinedValues(row, true),
+    // )
+    return this.pool()
+      .query(sql)
+      .stream()
+      .pipe(
+        new Transform({
+          objectMode: true,
+          transform(row: ROW, _encoding, cb) {
+            cb(null, _filterUndefinedValues(row, true))
+          },
+        }),
+      )
   }
 
   // SAVE

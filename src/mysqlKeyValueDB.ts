@@ -1,3 +1,4 @@
+import { Transform } from 'node:stream'
 import {
   CommonDBCreateOptions,
   CommonKeyValueDB,
@@ -88,7 +89,20 @@ export class MySQLKeyValueDB implements CommonKeyValueDB {
     if (limit) sql += ` LIMIT ${limit}`
     if (this.cfg.logSQL) this.db.cfg.logger.log(`stream: ${sql}`)
 
-    return (this.db.pool().query(sql).stream() as ReadableTyped<ObjectWithId>).map(row => row.id)
+    // todo: this is nice, but `mysql` package uses `readable-stream@2` which is not compatible with `node:stream` iterable helpers
+    // return (this.db.pool().query(sql).stream() as ReadableTyped<ObjectWithId>).map(row => row.id)
+    return this.db
+      .pool()
+      .query(sql)
+      .stream()
+      .pipe(
+        new Transform({
+          objectMode: true,
+          transform(row: ObjectWithId, _encoding, cb) {
+            cb(null, row.id)
+          },
+        }),
+      )
   }
 
   streamValues(table: string, limit?: number): ReadableTyped<Buffer> {
