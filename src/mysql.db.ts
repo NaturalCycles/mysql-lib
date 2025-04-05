@@ -1,17 +1,20 @@
 import { Readable, Transform } from 'node:stream'
 import { promisify } from 'node:util'
-import {
-  BaseCommonDB,
+import type {
   CommonDB,
   CommonDBCreateOptions,
-  commonDBFullSupport,
   CommonDBOptions,
   CommonDBSaveOptions,
   CommonDBSupport,
-  CommonDBType,
-  DBQuery,
   RunQueryResult,
 } from '@naturalcycles/db-lib'
+import { BaseCommonDB, commonDBFullSupport, CommonDBType, DBQuery } from '@naturalcycles/db-lib'
+import type {
+  CommonLogger,
+  JsonSchemaObject,
+  JsonSchemaRootObject,
+  ObjectWithId,
+} from '@naturalcycles/js-lib'
 import {
   _assert,
   _filterUndefinedValues,
@@ -19,14 +22,11 @@ import {
   _mapValues,
   _Memo,
   _omit,
-  CommonLogger,
   commonLoggerPrefix,
-  JsonSchemaObject,
-  JsonSchemaRootObject,
-  ObjectWithId,
 } from '@naturalcycles/js-lib'
-import { ReadableTyped, white } from '@naturalcycles/nodejs-lib'
-import {
+import type { ReadableTyped } from '@naturalcycles/nodejs-lib'
+import { white } from '@naturalcycles/nodejs-lib'
+import type {
   Connection,
   OkPacket,
   Pool,
@@ -36,13 +36,18 @@ import {
   TypeCast,
 } from 'mysql'
 import * as mysql from 'mysql'
-import { dbQueryToSQLDelete, dbQueryToSQLSelect, dbQueryToSQLUpdate, insertSQL } from './query.util'
+import {
+  dbQueryToSQLDelete,
+  dbQueryToSQLSelect,
+  dbQueryToSQLUpdate,
+  insertSQL,
+} from './query.util.js'
+import type { MySQLTableStats } from './schema/mysql.schema.util.js'
 import {
   jsonSchemaToMySQLDDL,
   mapNameFromMySQL,
-  MySQLTableStats,
   mysqlTableStatsToJsonSchemaField,
-} from './schema/mysql.schema.util'
+} from './schema/mysql.schema.util.js'
 
 export interface MysqlDBOptions extends CommonDBOptions {}
 export interface MysqlDBSaveOptions<ROW extends ObjectWithId> extends CommonDBSaveOptions<ROW> {}

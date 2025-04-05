@@ -3,8 +3,14 @@ import {
   createTestItemDBM,
   createTestItemsDBM,
   TEST_TABLE,
-} from '@naturalcycles/db-lib/dist/testing'
-import { dbQueryToSQLDelete, dbQueryToSQLSelect, dbQueryToSQLUpdate, insertSQL } from './query.util'
+} from '@naturalcycles/db-lib/dist/testing/index.js'
+import { expect, test } from 'vitest'
+import {
+  dbQueryToSQLDelete,
+  dbQueryToSQLSelect,
+  dbQueryToSQLUpdate,
+  insertSQL,
+} from './query.util.js'
 
 test('dbQueryToSQLSelect', () => {
   let sql = dbQueryToSQLSelect(new DBQuery('TBL1'))

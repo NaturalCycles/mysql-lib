@@ -1,15 +1,17 @@
 import { Transform } from 'node:stream'
-import {
+import type {
   CommonDBCreateOptions,
   CommonKeyValueDB,
-  commonKeyValueDBFullSupport,
   KeyValueDBTuple,
 } from '@naturalcycles/db-lib'
-import { IncrementTuple } from '@naturalcycles/db-lib/dist/kv/commonKeyValueDB'
-import { AppError, ObjectWithId, pMap } from '@naturalcycles/js-lib'
-import { ReadableTyped } from '@naturalcycles/nodejs-lib'
-import { QueryOptions } from 'mysql'
-import { MysqlDB, MysqlDBCfg } from './mysql.db'
+import { commonKeyValueDBFullSupport } from '@naturalcycles/db-lib'
+import type { IncrementTuple } from '@naturalcycles/db-lib/dist/kv/commonKeyValueDB.js'
+import type { ObjectWithId } from '@naturalcycles/js-lib'
+import { AppError, pMap } from '@naturalcycles/js-lib'
+import type { ReadableTyped } from '@naturalcycles/nodejs-lib'
+import type { QueryOptions } from 'mysql'
+import type { MysqlDBCfg } from './mysql.db.js'
+import { MysqlDB } from './mysql.db.js'
 
 interface KeyValueObject {
   id: string

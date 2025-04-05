@@ -1,6 +1,7 @@
 import { InMemoryDB } from '@naturalcycles/db-lib'
-import { createTestItemsBM, TEST_TABLE } from '@naturalcycles/db-lib/dist/testing'
-import { jsonSchemaToMySQLDDL } from './mysql.schema.util'
+import { createTestItemsBM, TEST_TABLE } from '@naturalcycles/db-lib/dist/testing/index.js'
+import { expect, test } from 'vitest'
+import { jsonSchemaToMySQLDDL } from './mysql.schema.util.js'
 
 test('commonSchemaToMySQLDDL', async () => {
   const items = createTestItemsBM(5)
